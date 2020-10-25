@@ -1,0 +1,12 @@
+{
+  "name": "deception",
+  "version": "0.0.0",
+  "main": "module.js",
+  "private": true,
+  "files": [
+    "module.js",
+    "public"
+  ],
+  "dependencies": {
+  }
+}
