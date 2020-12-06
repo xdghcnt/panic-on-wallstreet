@@ -3,8 +3,11 @@ function init(wsServer, path) {
         fs = require("fs"),
         app = wsServer.app,
         registry = wsServer.users,
-        channel = "panic-on-wallstreet",
-        testMode = process.argv[2] === "debug";
+        channel = "panic-on-wall-street",
+        testMode = process.argv[2] === "debug",
+        SCORE_STEP_TIME = 1000,
+        RANDOMIZE_STEP_TIME = 1000,
+        SCORE_END_TIME = 5000;
 
     app.use("/panic-on-wall-street", wsServer.static(`${__dirname}/public`));
     if (registry.config.appDir)
@@ -16,14 +19,12 @@ function init(wsServer, path) {
         constructor(hostId, hostData, userRegistry) {
             super(hostId, hostData, userRegistry);
             const
-                resetParams = {
-                    phase: 1,
-                    round: 0,
-                    stockIndR: 3,
-                    stockIndY: 3,
-                    stockIndG: 3,
-                    stockIndB: 3,
-                },
+                getResetParams = () => ({
+                    phase: 0,
+                    round: 1,
+                    stockInd: {R: 3, Y: 3, G: 3, B: 3},
+                    dice: {R: null, Y: null, G: null, B: null}
+                }),
                 room = {
                     inited: true,
                     hostId: hostId,
@@ -39,9 +40,9 @@ function init(wsServer, path) {
                     playerSlots: Array(11).fill(null),
                     teamsLocked: false,
                     playerAvatars: {},
-                    negotiationTime: 120,
+                    negotiationTime: testMode ? 5 : 120,
                     sellersPledgeTime: 10,
-                    auctionStepTime: 5,
+                    auctionStepTime: testMode ? 2 : 5,
                     bankruptcyEnabled: true,
                     time: null,
                     timed: true,
@@ -49,6 +50,7 @@ function init(wsServer, path) {
                     phase: 0,
                     round: 1,
                     deckSize: 0,
+                    auctionStocksTotal: null,
                     auctionStocksLeft: null,
                     auctionStock: null,
                     auctionBid: null,
@@ -61,12 +63,19 @@ function init(wsServer, path) {
                         B: [20, 20, 20, 30, 30, 30, 40, 40]
                     },
                     diceValues: {
-                        R: [-2, 2, -3, 3, -7, 7],
-                        Y: [-1, 1, -2, 2, -3, 3],
-                        G: [-1, 1, -2, 2, 2, 0],
-                        B: [-1, 1, -1, 1, 0, 0]
+                        R: [-7, -3, -2, 2, 3, 7],
+                        Y: [-3, -2, -1, 1, 2, 3],
+                        G: [-2, -1, 0, 1, 2, 2],
+                        B: [-1, -1, 0, 0, 1, 1]
                     },
-                    ...resetParams
+                    diceValuesOrig: {
+                        R: [-7, -3, -2, 2, 3, 7],
+                        Y: [-3, -2, -1, 1, 2, 3],
+                        G: [-2, -1, 0, 1, 2, 2],
+                        B: [-1, -1, 0, 0, 1, 1]
+                    },
+                    biddingCooldown: false,
+                    ...getResetParams()
                 },
                 state = {
                     deck: []
@@ -100,8 +109,14 @@ function init(wsServer, path) {
                 getRandomPlayer = (priority, exclude) => {
                     const res = [];
                     priority = priority || [];
-                    (priority.length ? priority : room.activeSlots).forEach((user, slot) => {
-                        if (user !== null && !exclude.includes(slot))
+                    exclude = exclude.map((slot) => {
+                        slot = parseInt(slot);
+                        if (priority.includes(slot))
+                            priority.splice(priority.indexOf(slot), 1);
+                        return slot;
+                    });
+                    (priority.length ? priority : room.activeSlots).forEach((slot) => {
+                        if (!exclude.includes(slot))
                             res.push(slot);
                     });
                     return shuffleArray(res)[0];
@@ -109,7 +124,11 @@ function init(wsServer, path) {
                 startGame = () => {
                     const playersCount = room.playerSlots.filter((user) => user !== null).length;
                     if (playersCount > 4) {
-                        Object.assign(room, resetParams);
+                        clearInterval(interval);
+                        resetFinalizeTimeouts();
+                        Object.assign(room, getResetParams());
+                        room.round = 1;
+                        room.phase = 1;
                         room.teamsLocked = true;
                         if (room.timed)
                             room.paused = false;
@@ -135,18 +154,23 @@ function init(wsServer, path) {
                         room.buyers = {};
 
                         while (sellersCount--)
-                            room.sellers[getRandomPlayer([...room.wantSellerList], [...room.sellers])] = {
+                            room.sellers[getRandomPlayer(
+                                [...room.wantSellerList].map((player) => room.playerSlots.indexOf(player)),
+                                [...Object.keys(room.sellers)])] = {
                                 balance: 120,
                                 // offers: [{player: 1, price: 10, stocks: {red: 2, blue2x: 1}, accepted: true, finalized: false, playerWantFinalize: 1  }]
                                 offers: [],
                                 stocks: state.deck.splice(0, 3).reduce((res, stock) => {
+                                    res[stock] = res[stock] || [];
                                     res[stock]++;
                                     return res;
                                 }, {}),
                                 needPledge: false
                             };
                         while (buyersCount--)
-                            room.buyers[getRandomPlayer([...room.wantBuyerList], [...room.sellers, ...room.buyers])] = {
+                            room.buyers[getRandomPlayer(
+                                [...room.wantBuyerList].map((player) => room.playerSlots.indexOf(player)),
+                                [...Object.keys(room.sellers), ...Object.keys(room.buyers)])] = {
                                 balance: 120
                             };
 
@@ -158,28 +182,49 @@ function init(wsServer, path) {
                                 ...Array(2).fill("blue2x"),
                             ]
                         );
-
-                        room.startTimer();
-                    } else endGame();
+                        startTimer();
+                    }
                 },
                 startStocksRandomize = () => {
                     room.phase = 2;
                     ["R", "Y", "G", "B"].forEach((color) => {
-                        let newStockInd = room[`stockInd${color}`] + shuffleArray(room.diceValues[color])[0];
-                        if (newStockInd < 0)
-                            newStockInd = 0;
-                        else if (newStockInd > 7)
-                            newStockInd = 7;
-                        room[`stockInd${color}`] = newStockInd;
+                        room.dice[color] = null;
                     });
-                    update();
-                    // show stocks
                     setTimeout(() => {
-                        showBuyerIncome(0);
-                    }, 3000)
+                        randomizeStock(0);
+                    }, RANDOMIZE_STEP_TIME);
+                    startTimer();
+                    update();
+                },
+                randomizeStock = (diceInd) => {
+                    const color = ["R", "Y", "G", "B"][diceInd];
+                    room.dice[color] = shuffleArray(room.diceValues[color])[0];
+                    let newStockInd = room.stockInd[color] + room.dice[color];
+                    if (newStockInd < 0)
+                        newStockInd = 0;
+                    else if (newStockInd > 7)
+                        newStockInd = 7;
+                    room.stockInd[color] = newStockInd;
+                    update();
+                    setTimeout(() => {
+                        if (diceInd < 3)
+                            randomizeStock(diceInd + 1);
+                        else
+                            startIncomePhase();
+                    }, RANDOMIZE_STEP_TIME);
+                },
+                startIncomePhase = () => {
+                    Object.keys(room.sellers).forEach((seller) => {
+                        room.sellers[seller].roundResult = null;
+                    });
+                    Object.keys(room.buyers).forEach((buyer) => {
+                        room.buyers[buyer].roundResult = null;
+                    });
+                    room.phase = 3;
+                    update();
+                    setTimeout(() => showBuyerIncome(0), SCORE_STEP_TIME);
                 },
                 showBuyerIncome = (buyerIndex) => {
-                    room.phase = 3;
                     const
                         buyerSlot = Object.keys(room.buyers)[buyerIndex],
                         buyer = room.buyers[buyerSlot];
@@ -192,7 +237,7 @@ function init(wsServer, path) {
                     };
                     Object.keys(room.sellers).forEach((seller) => {
                         room.sellers[seller].offers.forEach((offer) => {
-                            if (offer.accepted && offer.player === buyerSlot) {
+                            if (offer.accepted && offer.player == buyerSlot) {
                                 buyer.roundResult.overallOutcome -= offer.price;
                                 Object.keys(offer.stocks).forEach((stock) => {
                                     buyer.roundResult.stocksOwned[stock] = buyer.roundResult.stocksOwned[stock] || 0;
@@ -210,21 +255,21 @@ function init(wsServer, path) {
                         buyer.roundResult.stocksIncome[stockC] += income;
                         buyer.roundResult.overallIncome += income;
                     });
-                    buyer.balance += buyer.roundResult.overallIncome - buyer.roundResult.overallOutcome;
+                    buyer.balance += buyer.roundResult.overallIncome + buyer.roundResult.overallOutcome;
                     if (buyer.balance <= 0 && room.bankruptcyEnabled)
-                        room.bankrupts.add(buyerSlot);
+                        room.bankrupts.add(parseInt(buyerSlot));
                     // show buyer result
                     update();
-                    if (Object.keys(room.buyers).length < buyerIndex + 1)
-                        setTimeout(() => showBuyerIncome(buyerIndex + 1), 2000);
+                    if (Object.keys(room.buyers).length > buyerIndex + 1)
+                        setTimeout(() => showBuyerIncome(buyerIndex + 1), SCORE_STEP_TIME);
                     else
-                        startSellerIncome(0);
+                        showSellerIncome(0);
                 },
                 getStockValue = (color) => {
                     const c = color.substr(0, 1).toUpperCase();
-                    return room.stockValues[c][room[`stockInd${c}`]] * (color.endsWith("2x") ? 2 : 1);
+                    return room.stockValues[c][room.stockInd[c]] * (color.endsWith("2x") ? 2 : 1);
                 },
-                startSellerIncome = (sellerIndex) => {
+                showSellerIncome = (sellerIndex) => {
                     room.phase = 4;
                     const seller = room.sellers[Object.keys(room.sellers)[sellerIndex]];
                     seller.roundResult = {
@@ -243,14 +288,14 @@ function init(wsServer, path) {
                         }
                     });
                     seller.offers = [];
-                    seller.roundResult.overallOutcome += seller.stocks.length * 10;
+                    Object.keys(seller.stocks).forEach((stock) => {
+                        seller.roundResult.overallOutcome += seller.stocks[stock] * 10;
+                    });
                     seller.balance += seller.roundResult.overallIncome - seller.roundResult.overallOutcome;
                     // show seller result
                     update();
-                    if (Object.keys(room.sellers).length < sellerIndex + 1)
-                        setTimeout(() => startSellerIncome(sellerIndex + 1), 2000);
-                    else
-                        startSellersDebt();
+                    if (Object.keys(room.sellers).length > sellerIndex + 1)
+                        setTimeout(() => showSellerIncome(sellerIndex + 1), SCORE_STEP_TIME);
                 },
                 startSellersPledge = () => {
                     room.phase = 5;
@@ -258,10 +303,14 @@ function init(wsServer, path) {
                     Object.keys(room.sellers).forEach((sellerSlot) => {
                         const seller = room.sellers[sellerSlot];
                         if (seller.balance < 0) {
-                            if ((seller.balance + seller.stocks.length * 5) <= 0) {
-                                seller.stocks = [];
-                                seller.balance += seller.stocks.length * 5;
-                                room.bankrupts.add(sellerSlot);
+                            let stocksPrice = 0;
+                            Object.keys(seller.stocks).forEach((stock) => {
+                                stocksPrice += seller.stocks[stock] * 5;
+                            });
+                            if ((seller.balance + stocksPrice) <= 5) {
+                                seller.stocks = {};
+                                seller.balance += stocksPrice;
+                                room.bankrupts.add(parseInt(sellerSlot));
                             } else
                                 seller.needPledge = sellersNeedPledge = true;
                         }
@@ -282,22 +331,35 @@ function init(wsServer, path) {
                     Object.keys(room.sellers).forEach((sellerSlot) => {
                         const seller = room.sellers[sellerSlot];
                         if (seller.needPledge) {
-                            shuffleArray(seller.stocks);
-                            seller.stocks.splice(0, (seller.stocks.length / 5) * -1);
+                            const sellerStocks = shuffleArray(Object.keys(seller.stocks));
+                            let sellerStocksInd = 0;
+                            let needSellStocks = seller.balance / -5;
+                            while (needSellStocks > 0) {
+                                const randomStock = sellerStocks[sellerStocksInd];
+                                seller.stocks[randomStock]--;
+                                if (!seller.stocks[randomStock])
+                                    delete seller.stocks[randomStock];
+                                if (sellerStocksInd === sellerStocks.length - 1)
+                                    sellerStocksInd = 0;
+                                else
+                                    sellerStocksInd++;
+                                needSellStocks--;
+                            }
                             seller.balance = 0;
                             seller.needPledge = false;
                         }
                     });
                     clearInterval(interval);
-                    if (!Object.keys(room.sellers).some((sellerSlot) => !room.bankrupts.has(sellerSlot))
-                        || (room.bankruptcyEnabled && !Object.keys(room.buyers).some((buyersSlot) => !room.bankrupts.has(buyersSlot))))
+                    if (!Object.keys(room.sellers).some((sellerSlot) => !room.bankrupts.has(parseInt(sellerSlot)))
+                        || (room.bankruptcyEnabled && !Object.keys(room.buyers).some((buyersSlot) => !room.bankrupts.has(parseInt(buyersSlot)))))
                         endGame();
                     else
                         startAuction();
                 },
                 startAuction = () => {
                     room.phase = 6;
-                    room.auctionStocksLeft = Object.keys(room.sellers).length * 2 - 1;
+                    room.auctionStocksTotal = Object.keys(room.sellers).length * 2 - 1;
+                    room.auctionStocksLeft = room.auctionStocksTotal;
                     auctionStep();
                 },
                 auctionStep = () => {
@@ -311,13 +373,18 @@ function init(wsServer, path) {
                     if (room.auctionBidder !== null) {
                         const seller = room.sellers[room.auctionBidder];
                         seller.balance -= room.auctionBid;
-                        seller.stocks.push(room.auctionStock);
+                        seller.stocks[room.auctionStock] = seller.stocks[room.auctionStock] || 0;
+                        seller.stocks[room.auctionStock]++;
                     }
                     if (room.auctionStocksLeft > 0) {
                         room.auctionStocksLeft--;
                         auctionStep();
                     } else {
                         room.phase = 1;
+                        room.round += 1;
+                        room.auctionStock = null;
+                        room.auctionBid = null;
+                        room.auctionBidder = null;
                         startTimer();
                         update();
                     }
@@ -327,10 +394,13 @@ function init(wsServer, path) {
                     if (room.timed && room.phase !== 0) {
                         if (room.phase === 1)
                             room.time = room.negotiationTime * 1000;
+                        else if (room.phase > 1 && room.phase < 5)
+                            room.time = RANDOMIZE_STEP_TIME * 4 + RANDOMIZE_STEP_TIME + SCORE_END_TIME + SCORE_STEP_TIME
+                                + SCORE_STEP_TIME * (Object.keys(room.buyers).length + Object.keys(room.sellers).length);
                         else if (room.phase === 5)
                             room.time = room.sellersPledgeTime * 1000;
                         else if (room.phase === 6)
-                            room.time = room.auctionStepTime * 1000;
+                            room.time = (room.auctionStepTime * 1000) + 999;
                         let time = new Date();
                         interval = setInterval(() => {
                             if (!room.paused) {
@@ -340,6 +410,8 @@ function init(wsServer, path) {
                                     clearInterval(interval);
                                     if (room.phase === 1)
                                         startStocksRandomize();
+                                    else if (room.phase > 1 && room.phase < 5)
+                                        startSellersPledge();
                                     else if (room.phase === 5)
                                         endSellersPledge();
                                     else if (room.phase === 6)
@@ -350,14 +422,20 @@ function init(wsServer, path) {
                         }, 100);
                     }
                 },
-                isEnoughPlayers = () => room.playerSlots.filter((user) => user !== null).length > 4,
                 resetFinalizeTimeouts = () => {
                     Object.keys(this.finalizeTimeouts).forEach((key) => {
                         clearTimeout(this.finalizeTimeouts[key]);
                     });
                 },
-                endGame = () => {
+                endGame = (restart) => {
+                    room.phase = 0;
+                    room.paused = true;
+                    room.wantBuyerList = new JSONSet();
+                    room.wantSellerList = new JSONSet();
+                    clearInterval(interval);
                     resetFinalizeTimeouts();
+                    if (!restart)
+                        update();
                 },
                 removePlayer = (playerId) => {
                     room.wantBuyerList.delete(playerId);
@@ -414,8 +492,9 @@ function init(wsServer, path) {
             this.slotEventHandlers = {
                 "edit-offer": (slot, seller, stocks, price, offerInd) => {
                     if (room.buyers[slot] && room.sellers[seller]
-                        && !room.bankrupts.has(slot) && !room.bankrupts.has(seller)
+                        && !room.bankrupts.has(parseInt(slot)) && !room.bankrupts.has(parseInt(seller))
                         && stocks && !isNaN(price) && (price % 5) === 0
+                        && Object.keys(stocks).length
                         && Object.keys(stocks).every((stock) => room.sellers[seller].stocks[stock] >= stocks[stock])
                         && (offerInd == null || (room.sellers[seller].offers[offerInd] && room.sellers[seller].offers[offerInd].player === slot
                             && !room.sellers[seller].offers[offerInd].finalized))) {
@@ -441,39 +520,46 @@ function init(wsServer, path) {
                 "remove-offer": (slot, seller, offerInd) => {
                     if (room.buyers[slot] && room.sellers[seller]
                         && (room.sellers[seller].offers[offerInd] && room.sellers[seller].offers[offerInd].player === slot
-                            && !room.sellers[offerInd].offers[offerInd].finalized)) {
-                        room.sellers[seller].offers[offerInd].splice(offerInd, 1);
+                            && !room.sellers[seller].offers[offerInd].finalized)) {
+                        room.sellers[seller].offers.splice(offerInd, 1);
                         update();
                     }
                 },
                 "toggle-accept-offer": (slot, offerInd) => {
                     if (room.sellers[slot] && (room.sellers[slot].offers[offerInd] && !room.sellers[slot].offers[offerInd].finalized)) {
                         const
-                            offer = room.sellers[offerInd].offers[offerInd],
+                            offer = room.sellers[slot].offers[offerInd],
                             availableStocks = {...room.sellers[slot].stocks};
-
-                        room.sellers[slot].offers.forEach((offer) => {
+                        if (offer.accepted) {
+                            offer.accepted = false;
+                            update();
+                        } else {
+                            room.sellers[slot].offers.forEach((offer) => {
+                                if (offer.accepted)
+                                    Object.keys(offer.stocks).forEach((stock) => {
+                                        availableStocks[stock] -= offer.stocks[stock];
+                                    });
+                            });
+                            let notEnough = false;
                             Object.keys(offer.stocks).forEach((stock) => {
-                                availableStocks[stock] -= offer.stocks[stock];
-                            })
-                        });
-
-                        if (Object.keys(offer.stocks).every((stock) => {
-                            if (offer.stocks[stock] >= availableStocks[stock])
-                                return true;
-                            else
-                                send(room.playerSlots[slot], "not-enough-stocks", stock);
-                        })) {
-                            offer.accepted = !offer.accepted;
-                            offer.playerWantFinalize = null;
+                                if (availableStocks[stock] < offer.stocks[stock]) {
+                                    notEnough = true;
+                                    send(room.playerSlots[slot], "not-enough-stocks", stock);
+                                }
+                            });
+                            if (!notEnough) {
+                                offer.accepted = true;
+                                offer.playerWantFinalize = null;
+                                update();
+                            }
                         }
-                        update();
                     }
                 },
                 "ask-finalize-offer": (slot, seller, offerInd) => {
-                    if (room.sellers[slot] && (room.sellers[slot].offers[offerInd] && !room.sellers[slot].offers[offerInd].finalized)
-                        && !room.sellers[slot].offers[offerInd].finalized && room.sellers[slot].offers[offerInd].accepted) {
-                        const offer = room.sellers[slot].offers[offerInd];
+                    if (room.sellers[seller] && (room.sellers[seller].offers[offerInd] && !room.sellers[seller].offers[offerInd].finalized)
+                        && room.sellers[seller].offers[offerInd].accepted
+                        && (slot === seller || slot === room.sellers[seller].offers[offerInd].player)) {
+                        const offer = room.sellers[seller].offers[offerInd];
                         if (offer.playerWantFinalize !== null && offer.playerWantFinalize !== slot) {
                             offer.playerWantFinalize = null;
                             offer.finalized = true;
@@ -485,6 +571,7 @@ function init(wsServer, path) {
                             offer.playerWantFinalize = slot;
                             this.finalizeTimeouts[slot + offerInd] = setTimeout(() => {
                                 offer.playerWantFinalize = null;
+                                update();
                             }, 5000);
                         }
                         update();
@@ -495,7 +582,7 @@ function init(wsServer, path) {
                         room.sellers[slot].stocks[card]--;
                         room.sellers[slot].balance += 5;
                         if (room.sellers[slot].balance >= 0)
-                            room.sellers.needPledge = false;
+                            room.sellers[slot].needPledge = false;
                         if (!Object.keys(room.sellers).some((sellerSlot) => room.sellers[sellerSlot].needPledge))
                             endSellersPledge();
                         else
@@ -503,10 +590,16 @@ function init(wsServer, path) {
                     }
                 },
                 "bid-stock": (slot, amount) => {
-                    if (room.sellers[slot] && (room.sellers[slot].balance - amount) > 0) {
+                    if (!room.biddingCooldown && room.sellers[slot] && (room.sellers[slot].balance - (room.auctionBid + amount)) > 0
+                        && [5, 10].includes(amount)) {
                         room.auctionBid += amount;
                         room.auctionBidder = slot;
-                        room.time = room.auctionTimer;
+                        room.time = room.auctionStepTime * 1000;
+                        room.biddingCooldown = true;
+                        setTimeout(() => {
+                            room.biddingCooldown = false;
+                            update();
+                        }, 1000);
                         startTimer();
                     }
                     update();
@@ -559,26 +652,30 @@ function init(wsServer, path) {
                     }
                 },
                 "toggle-want-buyer": (user) => {
-                    if (room.phase === 0 && room.playerSlots.includes(user) && !room.wantBuyerList.has(user)) {
-                        room.wantBuyerList.add(user);
+                    if (room.phase === 0 && room.playerSlots.includes(user)) {
+                        if (!room.wantBuyerList.has(user))
+                            room.wantBuyerList.add(user);
+                        else
+                            room.wantBuyerList.delete(user);
                         room.wantSellerList.delete(user);
-                    } else
-                        room.wantMasterList.delete(user);
+                    }
                     update();
                 },
                 "toggle-want-seller": (user) => {
-                    if (room.phase === 0 && room.playerSlots.includes(user) && !room.wantSellerList.has(user)) {
-                        room.wantSellerList.add(user);
-                        room.wantBuyerList.user(user);
-                    } else
-                        room.wantSellerList.delete(user);
+                    if (room.phase === 0 && room.playerSlots.includes(user)) {
+                        if (!room.wantSellerList.has(user))
+                            room.wantSellerList.add(user);
+                        else
+                            room.wantSellerList.delete(user);
+                        room.wantBuyerList.delete(user);
+                    }
                     update();
                 },
                 "toggle-pause": (user) => {
                     if (user === room.hostId) {
                         if (room.phase !== 0)
                             room.paused = !room.paused;
-                        else if (isEnoughPlayers())
+                        else
                             startGame();
                         if (!room.paused)
                             room.teamsLocked = true;
@@ -598,10 +695,17 @@ function init(wsServer, path) {
                         endGame();
                     update();
                 },
+                "restart": (user) => {
+                    if (user === room.hostId) {
+                        endGame(true);
+                        startGame();
+                    }
+                    update();
+                },
                 "set-param": (user, type, value) => {
                     if (user === room.hostId) {
-                        if (["negotiation", "sellersPledge", "auctionStep"].includes(type) && !isNaN(parseInt(value)))
-                            room[`${type}Time`] = parseFloat(value);
+                        if (["negotiationTime", "sellersPledgeTime", "auctionStepTime"].includes(type) && !isNaN(parseInt(value)))
+                            room[type] = parseFloat(value);
                     }
                     update();
                 },
