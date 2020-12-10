@@ -771,7 +771,7 @@ class Game extends React.Component {
                                             <Timer time={data.timed && data.time}/>
                                         </div>
                                         <div className="buyers-income">
-                                            <div className="income-title">Менеджеры</div>
+                                            <div className="income-title">Инвесторы</div>
                                             {Object.keys(data.buyers).map((buyer) => (
                                                 <div className={cs("buyer-income-row")}>
                                                 <span className={cs("buyer-income-name", `bg-color-${buyer}`)}>
@@ -815,7 +815,7 @@ class Game extends React.Component {
                                             ))}
                                         </div>
                                         <div className="sellers-income">
-                                            <div className="income-title">Инвесторы</div>
+                                            <div className="income-title">Менеджеры</div>
                                             {Object.keys(data.sellers).map((seller) => (
                                                 <div className={cs("seller-income-row")}>
                                                 <span className={cs("seller-income-name", `bg-color-${seller}`)}>
@@ -858,7 +858,7 @@ class Game extends React.Component {
                                                     ? <i className="material-icons">looks_two</i>
                                                     : ""}
                                                 <div className="auction-stock-left">
-                                                    {data.auctionStocksTotal - data.auctionStocksLeft}/{data.auctionStocksTotal}
+                                                    {data.auctionStocksTotal - data.auctionStocksLeft + 1}/{data.auctionStocksTotal}
                                                 </div>
                                             </div>
                                         </div>
@@ -880,7 +880,7 @@ class Game extends React.Component {
                                              onClick={() => this.handleClickBidStock(5)}>+5
                                         </div>
                                         <div className="auction-rise-button auction-rise-10"
-                                             onClick={() => this.handleClickBidStock(5)}>+10
+                                             onClick={() => this.handleClickBidStock(10)}>+10
                                         </div>
                                     </div>
                                 </div>

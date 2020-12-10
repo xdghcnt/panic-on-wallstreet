@@ -564,6 +564,7 @@ body {
     text-align: center;
     width: 30px;
     margin-right: 8px;
+    user-select: none;
 }
 
 .offer-add-stock {

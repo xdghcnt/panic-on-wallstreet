@@ -263,7 +263,7 @@ function init(wsServer, path) {
                     if (Object.keys(room.buyers).length > buyerIndex + 1)
                         setTimeout(() => showBuyerIncome(buyerIndex + 1), SCORE_STEP_TIME);
                     else
-                        showSellerIncome(0);
+                        setTimeout(() => showSellerIncome(0), SCORE_STEP_TIME);;
                 },
                 getStockValue = (color) => {
                     const c = color.substr(0, 1).toUpperCase();
@@ -350,8 +350,8 @@ function init(wsServer, path) {
                         }
                     });
                     clearInterval(interval);
-                    if (!Object.keys(room.sellers).some((sellerSlot) => !room.bankrupts.has(parseInt(sellerSlot)))
-                        || (room.bankruptcyEnabled && !Object.keys(room.buyers).some((buyersSlot) => !room.bankrupts.has(parseInt(buyersSlot)))))
+                    if (room.round === 5 || (!Object.keys(room.sellers).some((sellerSlot) => !room.bankrupts.has(parseInt(sellerSlot)))
+                        || (room.bankruptcyEnabled && !Object.keys(room.buyers).some((buyersSlot) => !room.bankrupts.has(parseInt(buyersSlot))))))
                         endGame();
                     else
                         startAuction();
@@ -376,7 +376,7 @@ function init(wsServer, path) {
                         seller.stocks[room.auctionStock] = seller.stocks[room.auctionStock] || 0;
                         seller.stocks[room.auctionStock]++;
                     }
-                    if (room.auctionStocksLeft > 0) {
+                    if (room.auctionStocksLeft > 1) {
                         room.auctionStocksLeft--;
                         auctionStep();
                     } else {
@@ -590,7 +590,7 @@ function init(wsServer, path) {
                     }
                 },
                 "bid-stock": (slot, amount) => {
-                    if (!room.biddingCooldown && room.sellers[slot] && (room.sellers[slot].balance - (room.auctionBid + amount)) > 0
+                    if (!room.biddingCooldown && room.sellers[slot] && (room.sellers[slot].balance - (room.auctionBid + amount)) > 5
                         && [5, 10].includes(amount)) {
                         room.auctionBid += amount;
                         room.auctionBidder = slot;
