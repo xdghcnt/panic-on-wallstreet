@@ -348,11 +348,11 @@ body {
     background: #fff200;
 }
 
-.stock.green .stock-icon {
+.stock.blue .stock-icon {
     background: #00a2e8;
 }
 
-.stock.blue .stock-icon {
+.stock.green .stock-icon {
     background: #22b14c;
 }
 
@@ -366,12 +366,12 @@ body {
     color: #ffbb8b;
 }
 
-.stock.green2x .stock-icon {
+.stock.blue2x .stock-icon {
     background: #3f48cc;
     color: #8f96ff;
 }
 
-.stock.blue2x .stock-icon {
+.stock.green2x .stock-icon {
     background: #167232;
     color: #48b168;
 }

@@ -127,6 +127,7 @@ function init(wsServer, path) {
                         clearInterval(interval);
                         resetFinalizeTimeouts();
                         Object.assign(room, getResetParams());
+                        room.bankrupts.clear();
                         room.round = 1;
                         room.phase = 1;
                         room.teamsLocked = true;
@@ -263,7 +264,7 @@ function init(wsServer, path) {
                     if (Object.keys(room.buyers).length > buyerIndex + 1)
                         setTimeout(() => showBuyerIncome(buyerIndex + 1), SCORE_STEP_TIME);
                     else
-                        setTimeout(() => showSellerIncome(0), SCORE_STEP_TIME);;
+                        setTimeout(() => showSellerIncome(0), SCORE_STEP_TIME);
                 },
                 getStockValue = (color) => {
                     const c = color.substr(0, 1).toUpperCase();
@@ -682,13 +683,12 @@ function init(wsServer, path) {
                         update();
                     }
                 },
-                "toggle-timed": (user) => {
-                    if (user === room.hostId) {
-                        room.timed = !room.timed;
-                        if (!room.timed)
-                            room.paused = true;
+                "restart-timer": () => {
+                    if (testMode) {
+                        room.paused = false;
+                        startTimer();
+                        update();
                     }
-                    update();
                 },
                 "abort-game": (user) => {
                     if (user === room.hostId)

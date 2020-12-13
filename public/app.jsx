@@ -413,8 +413,8 @@ class Game extends React.Component {
         this.socket.emit("toggle-pause");
     }
 
-    handleToggleTimed() {
-        this.socket.emit("toggle-timed");
+    handleRestartTimer() {
+        this.socket.emit("restart-timer");
     }
 
     handleClickStop() {
@@ -922,11 +922,10 @@ class Game extends React.Component {
                                               className="material-icons start-game settings-button">attach_money</i>)
                                         : (<i onClick={() => this.emit("toggle-bankruptcy")}
                                               className="material-icons start-game settings-button">money_off</i>)) : ""}
-                                    {(isHost && data.paused) ? (!data.timed
-                                        ? (<i onClick={() => this.handleToggleTimed()}
-                                              className="material-icons start-game settings-button">alarm_off</i>)
-                                        : (<i onClick={() => this.handleToggleTimed()}
-                                              className="material-icons start-game settings-button">alarm</i>)) : ""}
+                                    {(isHost && data.paused && data.testMode) ? (
+                                        <i onClick={() => this.handleRestartTimer()}
+                                           className="material-icons start-game settings-button">alarm</i>
+                                    ) : ""}
                                     {(isHost && !inProcess) ?
                                         (<i onClick={() => this.handleClickRestart()}
                                             className="material-icons start-game settings-button">sync</i>) : ""}
