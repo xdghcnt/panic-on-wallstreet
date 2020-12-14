@@ -980,3 +980,15 @@ body {
 .stock-dice.current {
     box-shadow: 0 0 4px 3px red;
 }
+
+.rules {
+    position: fixed;
+    padding: 7px 10px;
+    left: 0;
+    top: 42px;
+    z-index: 1;
+}
+
+.rules a {
+    text-decoration: none;
+}

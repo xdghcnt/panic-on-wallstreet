@@ -333,7 +333,13 @@ class Game extends React.Component {
         initArgs.wssToken = window.wssToken;
         this.socket = window.socket.of("panic-on-wall-street");
         this.socket.on("state", (state) => {
-            CommonRoom.processCommonRoom(state, this.state);
+            if (state.phase === 0 && state.round === 5)
+                popup.alert({content: `Пройдите <a href="https://forms.gle/GZrLAKYmgHRWYmYXA" target="_blank">небольшой опрос</a> о прошедшей игре. Спасибо.`});
+            CommonRoom.processCommonRoom(state, this.state, {
+                maxPlayers: 11,
+                largeImageKey: "panic-on-wall-street",
+                details: "Panic on Wall Street"
+            });
             if (state.phase !== 1)
                 this.state.offerPane = null;
             this.setState(Object.assign(state, {
@@ -570,13 +576,22 @@ class Game extends React.Component {
                     this.seconds = date[2];
                 }
                 if (data.inited) {
+                    let gameIsOver = false;
+                    if (data.phase === 0 && data.round === 5)
+                        gameIsOver = true;
                     if (notEnoughPlayers)
-                        status = `Недостаточно игроков`;
+                        status = gameIsOver
+                            ? `Игра окончена! Недостаточно игроков для запуска новой игры`
+                            : `Недостаточно игроков`;
                     else if (data.phase === 0)
                         if (data.userId === data.hostId)
-                            status = `Вы можете начать игру`;
+                            status = gameIsOver
+                                ? `Игра окончена! Вы можете начать новую игру`
+                                : `Вы можете начать игру`;
                         else
-                            status = `Хост может начать игру`;
+                            status = gameIsOver
+                                ? `Игра окончена! Хост может начать новую игру`
+                                : `Хост может начать игру`;
                     else if (data.phase === 1)
                         status = "Торги";
                     else if (data.phase === 2)
@@ -885,6 +900,8 @@ class Game extends React.Component {
                                     </div>
                                 </div>
                                 : ""}
+                            <div className="rules panel"><a href="/panic-on-wall-street/PoWS_RulesList.png"
+                                                            target="_blank">Как играть?</a></div>
                             <HostControls
                                 app={this}
                                 data={data}
