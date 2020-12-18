@@ -442,8 +442,8 @@ class Game extends React.Component {
                 else
                     this.score.play();
             }
-        } else if (state.phase === 6) {
-            if (state.auctionStocksLeft < prevState.auctionStocksLeft) {
+        } else if (state.phase === 6 || (state.phase === 1 && prevState.phase === 6)) {
+            if (state.auctionStocksLeft < prevState.auctionStocksLeft || (state.phase === 1 && prevState.phase === 6)) {
                 if (prevState.auctionBidder === null)
                     this.notSold.play();
                 else
@@ -876,7 +876,7 @@ class Game extends React.Component {
                                             {Object.keys(data.buyers).map((buyer) => (
                                                 <div className={cs("buyer-income-row")}>
                                                 <span className={cs("buyer-income-name", `bg-color-${buyer}`)}>
-                                                    {data.playerNames[data.playerSlots[buyer]] || "<Empty>"}
+                                                    {data.playerNames[data.playerSlots[buyer]] || "<Пусто>"}
                                                 </span>
                                                     <div className={cs("offer-border", `text-color-${buyer}`)}/>
                                                     {data.buyers[buyer].roundResult
@@ -890,7 +890,7 @@ class Game extends React.Component {
                                                                             value={result.prevBalance}/></span>
                                                                         <span className="owned-stocks">{
                                                                             Object.keys(result.stocksOwned)
-                                                                                .filter((stock) => result.stocksIncome[stock] > 0)
+                                                                                .filter((stock) => result.stocksIncome[stock] !== 0)
                                                                                 .map((stock) => (<>
                                                                     <span className="stock-income">
                                                                         &nbsp;{result.stocksIncome[stock] > 0 ? "+" : "−"}
