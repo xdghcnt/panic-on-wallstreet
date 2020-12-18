@@ -340,13 +340,16 @@ class Game extends React.Component {
                 largeImageKey: "panic-on-wall-street",
                 details: "Panic on Wall Street"
             });
+            const userSlot = ~state.playerSlots.indexOf(this.userId)
+                ? state.playerSlots.indexOf(this.userId)
+                : null;
+            if (this.state?.inited && !this.isMuted())
+                this.processSounds(state, this.state, userSlot);
             if (state.phase !== 1)
                 this.state.offerPane = null;
             this.setState(Object.assign(state, {
                 userId: this.userId,
-                userSlot: ~state.playerSlots.indexOf(this.userId)
-                    ? state.playerSlots.indexOf(this.userId)
-                    : null,
+                userSlot,
                 player: this.state.player || {},
                 offerPane: this.state.offerPane
             }));
@@ -357,6 +360,18 @@ class Game extends React.Component {
                 stockNode.classList.add("not-enough-anim");
                 setTimeout(() => stockNode?.classList?.remove("not-enough-anim"), 0);
             }
+        });
+        this.socket.on("ask-finalize-offer", () => {
+            if (!this.isMuted())
+                this.askFinalize.play();
+        });
+        this.socket.on("accept-finalize-offer", () => {
+            if (!this.isMuted())
+                this.finalizeOffer.play();
+        });
+        this.socket.on("accept-offer", () => {
+            if (!this.isMuted())
+                this.deal.play();
         });
         window.socket.on("disconnect", (event) => {
             this.setState({
@@ -378,6 +393,65 @@ class Game extends React.Component {
         this.socket.on("message", text => {
             popup.alert({content: text});
         });
+        this.stockSold = new Audio("/panic-on-wall-street/stockSold.mp3");
+        this.stockSold.volume = 0.2;
+        this.bid = new Audio("/panic-on-wall-street/bid.mp3");
+        this.bid.volume = 0.2;
+        this.notSold = new Audio("/panic-on-wall-street/notSold.mp3");
+        this.notSold.volume = 0.2;
+        this.income = new Audio("/panic-on-wall-street/income.mp3");
+        this.income.volume = 0.2;
+        this.score = new Audio("/panic-on-wall-street/score.mp3");
+        this.score.volume = 0.1;
+        this.askFinalize = new Audio("/panic-on-wall-street/askFinalize.mp3");
+        this.askFinalize.volume = 0.2;
+        this.deal = new Audio("/panic-on-wall-street/deal.mp3");
+        this.deal.volume = 0.2;
+        this.finalizeOffer = new Audio("/panic-on-wall-street/finalizeOffer.mp3");
+        this.finalizeOffer.volume = 0.2;
+        this.phase1End = new Audio("/panic-on-wall-street/phase1End.wav");
+        this.phase1End.volume = 0.2;
+        this.diceSet = new Audio("/panic-on-wall-street/diceSet.wav");
+        this.diceSet.volume = 0.2;
+        this.tick = new Audio("/panic-on-wall-street/tick.mp3");
+        this.tick.volume = 0.4;
+    }
+
+    processSounds(state, prevState, userSlot) {
+        if (prevState.phase === 1 && state.phase === 2)
+            this.phase1End.play();
+        else if (state.phase === 2) {
+            if (Object.keys(state.dice).filter((ind) => state.dice[ind]).length
+                > Object.keys(prevState.dice).filter((ind) => prevState.dice[ind]).length)
+                this.diceSet.play();
+        } else if (state.phase === 3) {
+            const isBuyerIncomeEvent = Object.keys(state.buyers).filter((buyer) => state.buyers[buyer].roundResult).length
+                > Object.keys(prevState.buyers).filter((buyer) => prevState.buyers[buyer].roundResult).length;
+            if (isBuyerIncomeEvent) {
+                if (!prevState.buyers[userSlot]?.roundResult && state.buyers[userSlot]?.roundResult)
+                    this.income.play();
+                else
+                    this.score.play();
+            }
+        } else if (state.phase === 4) {
+            const isSellerIncomeEvent = Object.keys(state.sellers).filter((seller) => state.sellers[seller].roundResult).length
+                > Object.keys(prevState.sellers).filter((seller) => prevState.sellers[seller].roundResult).length;
+            if (isSellerIncomeEvent) {
+                if (!prevState.sellers[userSlot]?.roundResult && state.sellers[userSlot]?.roundResult)
+                    this.income.play();
+                else
+                    this.score.play();
+            }
+        } else if (state.phase === 6) {
+            if (state.auctionStocksLeft < prevState.auctionStocksLeft) {
+                if (prevState.auctionBidder === null)
+                    this.notSold.play();
+                else
+                    this.stockSold.play();
+            } else if (prevState.auctionBid && state.auctionBid > prevState.auctionBid) {
+                this.bid.play();
+            }
+        }
     }
 
     constructor() {
@@ -557,6 +631,15 @@ class Game extends React.Component {
         this.socket.emit("bid-stock", amount);
     }
 
+    isMuted() {
+        return !!parseInt(localStorage.muteSounds);
+    }
+
+    handleToggleMuteSounds() {
+        localStorage.muteSounds = !parseInt(localStorage.muteSounds) ? 1 : 0;
+        this.setState(Object.assign({}, this.state));
+    }
+
     render() {
         try {
             clearInterval(this.timerTimeout);
@@ -616,6 +699,9 @@ class Game extends React.Component {
                             let prevTime = this.state.time,
                                 time = prevTime - (new Date() - timeStart);
                             this.setState(Object.assign({}, this.state, {time: time}));
+                            if (this.state.phase === 1 && !this.isMuted() && this.state.timed
+                                && time < 8000 && ((Math.floor(prevTime / 1000) - Math.floor(time / 1000)) > 0))
+                                this.tick.play();
                         }
                     }, 100);
                 }
@@ -959,6 +1045,11 @@ class Game extends React.Component {
                                               className="material-icons start-game settings-button">lock_outline</i>)
                                         : (<i onClick={() => this.handleToggleTeamLockClick()}
                                               className="material-icons start-game settings-button">lock_open</i>)) : ""}
+                                    {!this.isMuted()
+                                        ? (<i onClick={() => this.handleToggleMuteSounds()}
+                                              className="toggle-theme material-icons settings-button">volume_up</i>)
+                                        : (<i onClick={() => this.handleToggleMuteSounds()}
+                                              className="toggle-theme material-icons settings-button">volume_off</i>)}
                                 </>}
                             />
                             <CommonRoom state={this.state} app={this}/>

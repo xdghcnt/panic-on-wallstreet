@@ -551,6 +551,10 @@ function init(wsServer, path) {
                             if (!notEnough) {
                                 offer.accepted = true;
                                 offer.playerWantFinalize = null;
+                                send([
+                                    room.playerSlots[slot],
+                                    room.playerSlots[offer.player]
+                                ], "accept-offer");
                                 update();
                             }
                         }
@@ -565,11 +569,19 @@ function init(wsServer, path) {
                             offer.playerWantFinalize = null;
                             offer.finalized = true;
                             clearTimeout(this.finalizeTimeouts[slot + offerInd]);
+                            send([
+                                room.playerSlots[slot],
+                                room.playerSlots[seller]
+                            ], "accept-finalize-offer");
                         } else if (offer.playerWantFinalize === slot) {
                             offer.playerWantFinalize = null;
                             clearTimeout(this.finalizeTimeouts[slot + offerInd]);
                         } else {
                             offer.playerWantFinalize = slot;
+                            send([
+                                room.playerSlots[slot],
+                                room.playerSlots[seller]
+                            ], "ask-finalize-offer");
                             this.finalizeTimeouts[slot + offerInd] = setTimeout(() => {
                                 offer.playerWantFinalize = null;
                                 update();
