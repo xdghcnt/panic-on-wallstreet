@@ -485,13 +485,8 @@ body {
     font-family: monospace;
     font-size: 16px;
     background: white;
-    visibility: hidden;
     overflow: visible;
     position: relative;
-}
-
-.stock-dice.active {
-    visibility: visible;
 }
 
 .bottom-pane .timer {

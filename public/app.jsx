@@ -739,8 +739,8 @@ class Game extends React.Component {
                                         {Object.keys(data.diceValues).map((stock) => (
                                             <div className={`stocks-line stocks-line-${stock}`}>
                                                 <div
-                                                    className={cs("stock-dice", {active: data.dice[stock] !== null})}>
-                                                    {data.dice[stock]}
+                                                    className={cs("stock-dice")}>
+                                                    {data.dice[stock] ?? "?"}
                                                     <div className="stock-dice-values">
                                                         {data.diceValuesOrig[stock].map((value, index) => <div
                                                             className={cs("stock-dice", {
@@ -836,7 +836,7 @@ class Game extends React.Component {
                                         </div>
                                         <div className="offer-add-controls">
                                             <div className="offer-add-stock-row">
-                                                {["red", "yellow", "blue", "green"].map((stock) =>
+                                                {["red", "yellow", "green", "blue"].map((stock) =>
                                                     (<div className={cs("stock", stock, {
                                                         inactive: hasStocks(stock)
                                                     })}
@@ -845,7 +845,7 @@ class Game extends React.Component {
                                                     </div>))}
                                             </div>
                                             <div className="offer-add-stock-row offer-add-stock-row-2x">
-                                                {["red2x", "yellow2x", "blue2x", "green2x"].map((stock) =>
+                                                {["red2x", "yellow2x", "green2x", "blue2x"].map((stock) =>
                                                     (<div className={cs("stock", stock, {
                                                         inactive: hasStocks(stock)
                                                     })}
