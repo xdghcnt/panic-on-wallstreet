@@ -26,6 +26,7 @@ function init(wsServer, path) {
                     dice: {R: null, Y: null, G: null, B: null}
                 }),
                 room = {
+                    ...this.room,
                     inited: true,
                     hostId: hostId,
                     spectators: new JSONSet(),
