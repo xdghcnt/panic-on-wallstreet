@@ -83,7 +83,7 @@ function init(wsServer, path) {
                     deck: []
                 };
             if (testMode)
-                [0, 1, 2, 3, 4, 5, 6].forEach((ind) => {
+                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].forEach((ind) => {
                     room.playerSlots[ind] = `kek${ind}`;
                     room.playerNames[`kek${ind}`] = `kek${ind}`;
                 });
@@ -507,7 +507,8 @@ function init(wsServer, path) {
             this.finalizeTimeouts = {};
             this.slotEventHandlers = {
                 "edit-offer": (slot, seller, stocks, price, offerInd) => {
-                    if (room.buyers[slot] && room.sellers[seller]
+                    if (room.phase === 1
+                        && room.buyers[slot] && room.sellers[seller]
                         && !room.bankrupts.has(parseInt(slot)) && !room.bankrupts.has(parseInt(seller))
                         && stocks && !isNaN(price) && (price % 5) === 0
                         && Object.keys(stocks).length
@@ -534,7 +535,7 @@ function init(wsServer, path) {
                     }
                 },
                 "remove-offer": (slot, seller, offerInd) => {
-                    if (room.buyers[slot] && room.sellers[seller]
+                    if (room.phase === 1 && room.buyers[slot] && room.sellers[seller]
                         && (room.sellers[seller].offers[offerInd] && room.sellers[seller].offers[offerInd].player === slot
                             && !room.sellers[seller].offers[offerInd].finalized)) {
                         room.sellers[seller].offers.splice(offerInd, 1);
@@ -542,7 +543,9 @@ function init(wsServer, path) {
                     }
                 },
                 "toggle-accept-offer": (slot, offerInd) => {
-                    if (room.sellers[slot] && (room.sellers[slot].offers[offerInd] && !room.sellers[slot].offers[offerInd].finalized)) {
+                    if (room.phase === 1
+                        && room.sellers[slot]
+                        && (room.sellers[slot].offers[offerInd] && !room.sellers[slot].offers[offerInd].finalized)) {
                         const
                             offer = room.sellers[slot].offers[offerInd],
                             availableStocks = {...room.sellers[slot].stocks};
@@ -576,7 +579,9 @@ function init(wsServer, path) {
                     }
                 },
                 "ask-finalize-offer": (slot, seller, offerInd) => {
-                    if (room.sellers[seller] && (room.sellers[seller].offers[offerInd] && !room.sellers[seller].offers[offerInd].finalized)
+                    if (room.phase === 1
+                        && room.sellers[seller]
+                        && (room.sellers[seller].offers[offerInd] && !room.sellers[seller].offers[offerInd].finalized)
                         && room.sellers[seller].offers[offerInd].accepted
                         && (slot === seller || slot === room.sellers[seller].offers[offerInd].player)) {
                         const offer = room.sellers[seller].offers[offerInd];
@@ -620,7 +625,10 @@ function init(wsServer, path) {
                     }
                 },
                 "bid-stock": (slot, amount) => {
-                    if (!room.biddingCooldown && room.sellers[slot] && (room.sellers[slot].balance - (room.auctionBid + amount)) > 5
+                    if (room.phase === 6
+                        && !room.biddingCooldown
+                        && room.sellers[slot]
+                        && (room.sellers[slot].balance - (room.auctionBid + amount)) > 5
                         && [5, 10].includes(amount)) {
                         room.auctionBid += amount;
                         room.auctionBidder = slot;
