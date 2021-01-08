@@ -1,6 +1,14 @@
+@font-face {
+    font-family: "Phosphorus";
+    src: url("media/Phosphorus Bromide.ttf") format("truetype");
+}
+
 .game-board {
     min-width: 500px;
-    padding-bottom: 48px;
+    display: flex;
+    flex-flow: column;
+    justify-content: space-around;
+    height: 100%;
 }
 
 .player.self {
@@ -12,7 +20,6 @@
 }
 
 .player.offline .player-name-text {
-    box-shadow: 0 0 15px 4px grey;
     text-decoration: line-through;
 }
 
@@ -30,8 +37,11 @@
 
 body {
     background-size: cover;
-    background: #3e3e3e;
+    background: #594242;
     background-image: linear-gradient(0deg, #00838f21, #ffffff1a);
+    background-image: url(media/bg.jpg);
+    background-size: contain;
+    background-position: center;
 }
 
 .kicked {
@@ -113,10 +123,10 @@ body {
     background-repeat: no-repeat;
     position: relative;
     box-shadow: inset 0 0 3px 2px black;
-    background-color: #d6d6d6;
     display: flex;
     align-items: center;
     justify-content: center;
+    background-blend-mode: soft-light;
 }
 
 .avatar:hover .set-avatar-button, .avatar:focus .set-avatar-button {
@@ -138,6 +148,7 @@ body {
 
 .player-name {
     text-align: center;
+    font-size: 14px;
 }
 
 .spectators .player-name-text {
@@ -145,15 +156,31 @@ body {
 }
 
 .player-slot {
-    height: 113px;
     display: flex;
     padding: 5px;
-    background: #baa088;
-    box-shadow: 0 0 6px 0px black;
     color: white;
-    border-radius: 4px;
     z-index: 1;
     position: relative;
+    --border-color: #16413c;
+    margin: 3px;
+}
+
+.seller-section .player-slot {
+    width: 220px;
+}
+
+.ornament-border {
+    --background-color: #f1e8c7;
+    border: 4px solid var(--border-color);
+    --stop-list: #ffffff00 9px, #ffffff 9px;
+    --stop-list-bg: var(--border-color) 9px, #ffffff00 0px;
+    --var-mask: radial-gradient(circle at 0% 0%, var(--stop-list)), radial-gradient(circle at 100% 0%, var(--stop-list)), radial-gradient(circle at 0% 100%, var(--stop-list)), radial-gradient(circle at 100% 100%, var(--stop-list));
+    --var-mask-composite: source-in;
+    mask: var(--var-mask);
+    mask-composite: var(--var-mask-composite);
+    -webkit-mask: var(--var-mask);
+    -webkit-mask-composite: var(--var-mask-composite);
+    background: radial-gradient(circle at 0% 0%, var(--stop-list-bg)), radial-gradient(circle at 100% 0%, var(--stop-list-bg)), radial-gradient(circle at 0% 100%, var(--stop-list-bg)), radial-gradient(circle at 100% 100%, var(--stop-list-bg)), var(--background-color);
 }
 
 .player-section {
@@ -174,94 +201,95 @@ body {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    padding: 2px 0px;
 }
 
 .bg-color-0 {
     background-color: #c62828;
 }
 
-.text-color-0 {
-    color: #c62828;
+.border-color-0 {
+    --border-color: #c62828;
 }
 
 .bg-color-1 {
     background-color: #2e7d32;
 }
 
-.text-color-1 {
-    color: #2e7d32;
+.border-color-1 {
+    --border-color: #2e7d32;
 }
 
 .bg-color-2 {
     background-color: #ef6c00;
 }
 
-.text-color-2 {
-    color: #ef6c00;
+.border-color-2 {
+    --border-color: #ef6c00;
 }
 
 .bg-color-3 {
     background-color: #283593;
 }
 
-.text-color-3 {
-    color: #283593;
+.border-color-3 {
+    --border-color: #283593;
 }
 
 .bg-color-4 {
     background-color: #6a1b9a;
 }
 
-.text-color-4 {
-    color: #6a1b9a;
+.border-color-4 {
+    --border-color: #6a1b9a;
 }
 
 .bg-color-5 {
     background-color: #00838f;
 }
 
-.text-color-5 {
-    color: #00838f;
+.border-color-5 {
+    --border-color: #00838f;
 }
 
 .bg-color-6 {
     background-color: #50a0d1;
 }
 
-.text-color-6 {
-    color: #50a0d1;
+.border-color-6 {
+    --border-color: #50a0d1;
 }
 
 .bg-color-7 {
     background-color: #f06292;
 }
 
-.text-color-7 {
-    color: #f06292;
+.border-color-7 {
+    --border-color: #f06292;
 }
 
 .bg-color-8 {
     background-color: #795548;
 }
 
-.text-color-8 {
-    color: #795548;
+.border-color-8 {
+    --border-color: #795548;
 }
 
 .bg-color-9 {
     background-color: #d4c00f;
 }
 
-.text-color-9 {
-    color: #d4c00f;
+.border-color-9 {
+    --border-color: #d4c00f;
 }
 
 .bg-color-10 {
     background-color: #757575;
 }
 
-.text-color-10 {
-    color: #757575;
+.border-color-10 {
+    --border-color: #757575;
 }
 
 .want-role-section {
@@ -288,10 +316,10 @@ body {
 
 .bottom-pane {
     display: flex;
-    position: absolute;
-    bottom: 0;
+    /* position: absolute; */
+    /* bottom: 0; */
     justify-content: center;
-    left: 0;
+    /* left: 0; */
     right: 0;
     flex-wrap: wrap;
     flex-flow: column;
@@ -304,21 +332,31 @@ body {
     align-items: flex-end;
 }
 
+.buyer-slots > div {
+    margin: 8px 4px;
+}
+
 .seller-slots {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
+    font-family: sans-serif, Tahoma;
 }
 
 .seller-stocks {
     display: flex;
     flex-wrap: wrap;
-    height: 90px;
 }
 
 .stock {
     display: flex;
     align-items: center;
+    position: relative;
+    user-select: none;
+}
+
+.seller-stocks .stock, .offer-pane .stock {
+    height: 41px;
 }
 
 .owned-stock.stock {
@@ -328,7 +366,7 @@ body {
 
 .owned-stock .stock-icon {
     width: 20px;
-    margin: 0px;
+    margin: 0;
     height: 17px;
 }
 
@@ -338,75 +376,155 @@ body {
     margin: 0 5px;
     text-align: right;
     position: relative;
+    box-shadow: inset 0 0 0px 2px #00000061;
 }
 
 .stock.red .stock-icon {
-    background: #ed1c24;
-    /* background-image: linear-gradient(-45deg, gray 0%, transparent 0%, gray 10%, transparent 10%, gray 20%, transparent 20%, gray 30%, transparent 30%, gray 40%, transparent 40%, gray 50%, transparent 50%, gray 60%, transparent 60%, gray 70%, transparent 70%, gray 80%, transparent 80%, gray 90%, transparent 90%, gray 100%, transparent 100%); */
+    background: #bf3747;
+}
+
+.stock.red .stock-icon-full {
+    color: #bf3747;
+}
+
+.stock.red .stock-icon-full::after {
+    background-image: url("media/red.jpg");
+}
+
+.stock.red2x .stock-icon {
+    background: #cf1200;
+}
+
+.stock.red2x .stock-icon-full {
+    color: #cf1200;
+}
+
+.stock.red2x .stock-icon-full::after {
+    background-image: url("media/red2x.jpg");
 }
 
 .stock.yellow .stock-icon {
     background: #fff200;
 }
 
+.stock.yellow .stock-icon-full {
+    color: #fff200;
+}
+
+.stock.yellow .stock-icon-full::after {
+    background-image: url("media/yellow.jpg");
+}
+
+.stock.yellow2x .stock-icon {
+    background: #ff7f27;
+}
+
+.stock.yellow2x .stock-icon-full {
+    color: #ff7f27;
+}
+
+.stock.yellow2x .stock-icon-full::after {
+    background-image: url("media/yellow2x.jpg");
+}
+
 .stock.blue .stock-icon {
     background: #00a2e8;
+}
+
+.stock.blue .stock-icon-full {
+    color: #00a2e8;
+}
+
+.stock.blue .stock-icon-full::after {
+    background-image: url("media/blue.jpg");
+}
+
+.stock.blue2x .stock-icon {
+    background: #3f48cc;
+}
+
+.stock.blue2x .stock-icon-full {
+    color: #3f48cc;
+}
+
+.stock.blue2x .stock-icon-full::after {
+    background-image: url("media/blue2x.jpg");
 }
 
 .stock.green .stock-icon {
     background: #22b14c;
 }
 
-.stock.red2x .stock-icon {
-    background: #880015;
-    color: #e37d81;
+.stock.green .stock-icon-full {
+    color: #22b14c;
 }
 
-.stock.yellow2x .stock-icon {
-    background: #ff7f27;
-    color: #ffbb8b;
-}
-
-.stock.blue2x .stock-icon {
-    background: #3f48cc;
-    color: #8f96ff;
+.stock.green .stock-icon-full::after {
+    background-image: url("media/green.jpg");
 }
 
 .stock.green2x .stock-icon {
     background: #167232;
-    color: #48b168;
+}
+
+.stock.green2x .stock-icon-full {
+    color: #167232;
+}
+
+.stock.green2x .stock-icon-full::after {
+    background-image: url("media/green2x.jpg");
+}
+
+.stock .stock-icon-full::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    margin: -0.5px;
+    z-index: -1;
+}
+
+.stock.noStocks .stock-icon-full::after {
+    opacity: 0.3;
+    filter: saturate(1);
 }
 
 .player-balance {
-    position: absolute;
-    right: 4px;
-    background: #ffc107;
-    padding: 2px 3px;
-    font-weight: bold;
     font-size: 19px;
     color: black;
-    border: 2px solid;
-    top: 58px;
+    background: url(media/balance-bg.png);
+    background-size: contain;
+    width: 101px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Phosphorus';
+    color: #16413c;
+    font-size: 24px;
+    font-weight: bold;
+    padding-top: 1px;
 }
 
-.add-offer {
-    background: #7e6c5b;
+.add-offer.ornament-border {
     text-align: center;
     cursor: pointer;
-    color: white;
+    color: #16413c;
     font-size: 20px;
     user-select: none;
+    margin-top: 5px;
+    width: 63%;
+    margin: 6px auto;
+    font-weight: bold;
+    --border-color: #16413c;
+    --background-color: #f1e8c7;
 }
 
 .seller-section {
-    margin: 5px;
-    width: 212px;
-}
-
-.offers {
-    margin: 6px 0;
-    /* background: white; */
-    z-index: 0;
+    margin: 0 5px;
 }
 
 .stock-icon .material-icons {
@@ -414,16 +532,23 @@ body {
 }
 
 .stock-count {
-    font-family: monospace;
-    font-size: 16px;
+    font-family: Phosphorus;
+    font-size: 14px;
+    position: absolute;
+    background: #f1e8c7;
+    color: black;
+    padding: 0 4px;
+    bottom: 2px;
+    right: 2px;
+    text-align: center;
+    font-weight: bold;
 }
 
 .stocks-table {
     display: flex;
     flex-flow: row;
-    width: 300px;
+    width: 275px;
     flex-wrap: wrap;
-    background: #565656;
     justify-content: center;
 }
 
@@ -436,6 +561,9 @@ body {
 .stocks-line {
     display: flex;
     align-items: center;
+    border: 3px solid #16413c;
+    border-radius: 7px;
+    margin-top: -3px;
 }
 
 .stocks-line-R {
@@ -489,50 +617,62 @@ body {
     position: relative;
 }
 
-.bottom-pane .timer {
-    background: #656464;
-    margin: auto;
-    padding: 5px 9px;
-    color: white;
+.status-message {
+    background: #16413c;
+    width: 252px;
+    text-align: center;
+    padding: 4px 20px;
+    box-sizing: border-box;
+    clip-path: polygon(100% 0%, 97% 50%, 100% 100%, 0 100%, 3% 50%, 0 0%);
+    position: relative;
+    margin-bottom: 2px;
+    color: #16413c;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-.status-message {
-    background: wheat;
-    width: 265px;
-    text-align: center;
-    padding: 4px 1px;
-    box-sizing: border-box;
+.status-message::before {
+    content: "";
+    clip-path: polygon(100% 0%, 97% 50%, 100% 100%, 0 100%, 3% 50%, 0 0%);
+    width: 98%;
+    height: 86%;
+    position: absolute;
+    background: #f1e8c7;
+    left: 1%;
+    top: 7%;
+    z-index: -1;
 }
 
 .offer-pane {
     position: fixed;
-    right: 0;
-    background: #ffffffe6;
-    border-top-left-radius: 20px;
-    border-bottom-left-radius: 20px;
     display: flex;
-    padding: 13px 14px;
+    padding: 7px;
     flex-wrap: wrap;
     flex-flow: column;
     top: 50%;
-    transform: translate(0, -50%);
+    box-shadow: 0 0 4px 1px black;
+    background: url(media/offer-bg.png) center 7px no-repeat #f1e8c7;
+    width: 330px;
+    box-sizing: border-box;
+    font-family: sans-serif, Tahoma;
+    z-index: 1;
+    transform: translate(0,-50%);
+    animation: edit-offer-slide-in 0.3s forwards;
 }
 
 .auction-pane {
     position: fixed;
-    left: 0;
-    background: #ffffffe6;
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
-    display: flex;
-    padding: 13px 14px;
-    flex-wrap: wrap;
+    left: 10px;
+    background: #16413c;
     flex-flow: column;
     top: 50%;
     transform: translate(0, -50%);
     display: flex;
     align-items: center;
-    width: 145px;
+    border-radius: 13px;
+    border: 7px double #8cbcab;
+    padding: 2px;
+    animation: auction-pane-slide-in 0.2s forwards;
 }
 
 .offer-stock {
@@ -541,37 +681,38 @@ body {
 
 .stocks-pane {
     display: flex;
-    align-items: start;
 }
 
 .offer-stock-count-value {
     text-align: center;
+    /* font-size: 18px; */
 }
 
 .offer-price {
-    background: #ffc107;
-    color: black;
+    background: #16413c;
+    color: #f1e8c7;
+    font-family: 'Phosphorus';
+    padding-top: 1px;
 }
 
 .offers .offer-price {
-    padding: 0 4px;
+    padding: 1px 4px 0px;
 }
 
 .offer-pane .offer-price {
     text-align: center;
-    width: 30px;
-    margin-right: 8px;
     user-select: none;
+    display: flex;
+    padding: 0 4px;
+    font-size: 18px;
+    padding-top: 1px;
 }
 
 .offer-add-stock {
     display: flex;
-    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
-}
-
-.offer-add-stock-row {
-    display: flex;
 }
 
 .offer-price-up, .offer-price-down {
@@ -579,25 +720,14 @@ body {
 }
 
 .offer-top-row {
-    display: flex;
     padding: 0 4px;
-}
-
-.offer-add-stock-row .stock-icon {
-    width: 40px;
-    height: 30px;
-    cursor: pointer;
-}
-
-.offer-add-stock-row-2x .stock-icon {
-    height: 23px;
 }
 
 .offer-stock-up, .offer-stock-down {
     cursor: pointer;
 }
 
-.offer-stock-up.inactive {
+.offer-stock-count .inactive {
     cursor: default;
     opacity: 0.2;
 }
@@ -613,14 +743,14 @@ body {
 }
 
 .add-offer.adding {
-    box-shadow: 0 0 0 3px #ffc107;
+    --border-color: #f1e8c7;
+    --background-color: #16413c;
+    color: #f1e8c7;
+    --border-color: #16413c;
+    --background-color: #16413c;
 }
 
-.adding {
-    box-shadow: 0 0 0 3px #ffc107;
-}
-
-.seller-stocks .stock.hasStocks {
+.seller-stocks .stock.hasStocks, .offer-pane .stock.hasStocks {
     cursor: pointer;
 }
 
@@ -636,29 +766,31 @@ body {
 
 .offer-add-save {
     display: flex;
-    flex-flow: column;
     align-items: center;
+    position: absolute;
+    right: 8px;
 }
 
 .offer-add-save .save {
-    font-size: 35px;
-    color: #13bb1b;
+    font-size: 30px;
     cursor: pointer;
+    margin: 0;
 }
 
 
 .offer-add-save .cancel {
-    font-size: 20px;
-    color: #f84747;
+    font-size: 22px;
     cursor: pointer;
+    margin: 0;
 }
 
 .offer {
     display: flex;
-    padding: 2px;
+    padding: 2px 7px;
     align-items: center;
-    color: white;
+    color: black;
     position: relative;
+    margin-top: 6px;
 }
 
 .offer-stocks {
@@ -672,13 +804,23 @@ body {
 
 .offer-buttons {
     position: absolute;
-    right: -48px;
+    right: -43px;
     display: none;
+    backdrop-filter: blur(12px);
+    top: 0px;
+    color: #16413c;
+    background: #f1e8c7;
+    border: 4px solid var(--border-color);
+    padding: 2px;
+    border-left: 0;
     z-index: 1;
-    background: #adadadcc;
 }
 
-.offer:hover .offer-buttons {
+.offer-wrap {
+    position: relative;
+}
+
+.offer-wrap:hover .offer-buttons {
     display: block;
 }
 
@@ -697,6 +839,7 @@ body {
     pointer-events: none;
     background-image: linear-gradient(0deg, #ffffff57, #ffffff1a);
     /* z-index: 1; */
+    display: none;
 }
 
 .offers .stock-icon {
@@ -711,6 +854,8 @@ body {
     left: 0;
     border: 2px solid;
     pointer-events: none;
+    border: 4px solid;
+    --border-color: #16413c;
 }
 
 .round-result .offer-border {
@@ -721,6 +866,7 @@ body {
     cursor: pointer;
     display: flex;
     align-items: center;
+    color: #16413c;
 }
 
 .offer-can-accept .button-accept:hover {
@@ -743,7 +889,7 @@ body {
 }
 
 .want-finalize .button-finalize i {
-    color: #a7ff07;
+    color: #16413c;
     font-size: 10px;
     margin-top: 1px;
 }
@@ -766,7 +912,7 @@ body {
     cx: 9;
     cy: 9;
     fill: none;
-    stroke: #60ff2c;
+    stroke: #ef6c00;
     stroke-width: 3px;
     stroke-dasharray: 50;
     transform: rotate(-87deg);
@@ -777,17 +923,24 @@ body {
 }
 
 @keyframes finalize-circle {
-  0% {
-    stroke-dashoffset: 50;
-  }
-  100% {
-    stroke-dashoffset: 0;
-  }
+    0% {
+        stroke-dashoffset: 50;
+    }
+    100% {
+        stroke-dashoffset: 0;
+    }
 }
 
-.seller-stocks .stock .stock-icon {
+.seller-stocks .stock .stock-icon, 
+.offer-pane .stock .stock-icon,
+.auction-pane .stock .stock-icon {
     box-shadow: 0 0 0 0 red;
     transition: box-shadow 1s;
+    border: 3px solid;
+    width: 50px;
+    height: 35px;
+    margin: 0;
+    background: none;
 }
 
 .seller-stocks .stock .stock-icon.needPledge {
@@ -795,12 +948,12 @@ body {
 }
 
 @keyframes needPledge-circle {
-  0% {
-    box-shadow: 0 0 0 0 red;
-  }
-  100% {
-    box-shadow: 0 0 5px 2px red, inset 0 0 0px 1px #baa088;
-  }
+    0% {
+        box-shadow: 0 0 0 0 red;
+    }
+    100% {
+        box-shadow: 0 0 5px 2px red, inset 0 0 0px 1px #baa088;
+    }
 }
 
 .seller-stocks .stock.not-enough-anim .stock-icon {
@@ -814,24 +967,39 @@ body {
 }
 
 .auction-bid {
-    background: #ffc107;
-    padding: 2px 9px;
+    background: url(/panic-on-wall-street/media/auction-price-bg.png) 0;
     font-weight: bold;
-    font-size: 19px;
+    font-size: 20px;
     margin-top: -7px;
-    border: 2px solid;
     position: relative;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content:  center;
+    right: -52px;
+    top: -35px;
+    margin-bottom: -37px;
+    font-family: 'Phosphorus';
+    color: #16413c;
 }
 
 .auction-rise-button {
-    background: #baa088;
-    padding: 6px 9px;
+    background: #f1e8c7;
+    padding: 6px 4px;
     display: flex;
     width: 44px;
     justify-content: center;
     cursor: pointer;
-    margin: 0 6px;
+    margin: -8px -1px;
     user-select: none;
+    color: #16413c;
+    font-family: 'Phosphorus';
+    font-weight: 600;
+    font-size: 21px;
+    border-radius: 7px;
+    padding-top: 7px;
+    border: 4px solid #16413c;
 }
 
 .auction-controls.inactive .auction-rise-button {
@@ -842,10 +1010,23 @@ body {
 
 .auction-controls {
     display: flex;
+    background: url(/panic-on-wall-street/media/auction-elem.png) 0 14px;
+    margin: 0px;
+    padding: 11px 8px;
+    background-clip: content-box;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
 }
 
 .auction-bidder {
-    margin: 9px 0;
+    color: #ffffff;
+    font-size: 16px;
+    text-align: center;
+    border: 1px solid aliceblue;
+    margin: 6px 5px 9px;
+    padding: 2px 5px;
 }
 
 .auction-stock .material-icons {
@@ -856,17 +1037,22 @@ body {
     position: absolute;
     margin: 10px;
     font-size: 20px;
-    color: white;
+    color: #f1e8c7;
     padding: 0 3px;
-    background: #00000059;
     top: 0;
+    font-family: 'Phosphorus';
+    left: 0;
 }
 
 .auction-pane .timer {
     font-size: 25px;
+    color: #f1e8c7;
+    font-family: 'Phosphorus';
+    text-align: center;
+    padding: 8px;
 }
 
-.buyer-income-row, .seller-income-row  {
+.buyer-income-row, .seller-income-row {
     position: relative;
     margin-top: 8px;
     display: flex;
@@ -889,10 +1075,12 @@ body {
 }
 
 .round-result {
-    background: #fadfc0;
     padding: 10px;
-    border-radius: 10px;
     min-width: 260px;
+    font-family: sans-serif;
+    color: #16413c;
+    --border-color: #16413c;
+    border: 6px solid var(--border-color);
 }
 
 .buyer-income-name, .seller-income-name {
@@ -907,7 +1095,7 @@ body {
 }
 
 .round-result-title {
-    font-size: 25px;
+    font-size: 23px;
     text-align: center;
     position: relative;
 }
@@ -988,4 +1176,288 @@ body {
 
 .rules a {
     text-decoration: none;
+}
+
+@media (max-width: 765px) {
+    .stocks-table {
+        order: 1;
+    }
+}
+
+.player-slots {
+    font-family: sans-serif, Tahoma;
+}
+
+.bottom-pane {
+    font-family: sans-serif, Tahoma;
+}
+
+.stock-icon-2x {
+    color: white;
+    text-shadow: 0 0 4px black;
+}
+
+.auction-pane .stock-icon-2x {
+    font-size: 33px;
+    font-family: sans-serif, Tahoma;
+    margin-right: 4px;
+    font-weight: 600;
+}
+
+.offer-pane-title {
+    color: #16413c;
+    font-family: "Phosphorus";
+    font-size: 28px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.offer-price-edit {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    color: #16413c;
+    height: 32px;
+    margin: 7px 0;
+}
+
+.offer-price-edit i:hover {
+    text-shadow: 0 0 3px orange;
+}
+
+.offer-price-edit i {
+    font-size: 40px;
+    margin: -5px;
+}
+
+.offer-price-edit .double i {
+    font-size: 19px;
+    margin: -5px;
+    margin-top: -4px;
+}
+
+.offer-stock-count i {
+    font-size: 19px;
+    margin: -4px 2px;
+}
+
+
+.offer-stock-count i:hover {
+    text-shadow: 0 0 5px orange;
+}
+
+.auction-pane-inner {
+    border: 12px solid #f1e8c7;
+    border-radius: 26px;
+    background: #227269;
+    box-shadow: inset 0 0 0 2px #16413c;
+    width: 185px;
+    position: relative;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    z-index: 0;
+}
+
+.auction-bidder-title {
+    color: #f1e8c7;
+    font-size: 18px;
+    text-align: center;
+}
+
+.auction-pane .stock .stock-icon {
+    width: 134px;
+    height: 95px;
+}
+
+.material-icons.settings-button:hover {
+    color: #f1e8c7;
+    background: #16413c;
+}
+.flip-clock {
+    background: #313131;
+    padding: 8px 5px;
+    user-select: none;
+}
+
+.timer.active .card__top, .timer.active .card__back::before {
+    box-shadow: inset -1px 3px 13px -3px #a5f2eb;
+}
+
+.card__top,
+.card__bottom,
+.card__back::before,
+.card__back::after {
+    color: #717171;
+}
+
+.card__bottom {
+    color: #888;
+}
+
+.timer.active .card__top,
+.timer.active .card__bottom,
+.timer.active .card__back::before,
+.timer.active .card__back::after {
+    color: #ccc;
+}
+
+.timer.active .card__bottom {
+    color: #FFF;
+}
+
+.flip-clock {
+    text-align: center;
+    perspective: 400px;
+    font-family: serif;
+}
+
+.flip-clock *,
+.flip-clock *:before,
+.flip-clock *:after {
+    box-sizing: border-box;
+}
+
+.flip-clock__piece {
+    display: inline-block;
+    margin: 0 5px;
+}
+
+.flip-clock__slot {
+    font-size: 2vw;
+}
+
+.clock-card {
+    display: block;
+    position: relative;
+    padding-bottom: 0.72em;
+    font-size: 19px;
+    line-height: 0.95;
+}
+
+.card__top,
+.card__bottom,
+.card__back::before,
+.card__back::after {
+    display: block;
+    height: 0.72em;
+    background: #424242;
+    padding: 0.25em 0.25em;
+    border-radius: 0.15em 0.15em 0 0;
+    backface-visiblity: hidden;
+    transform-style: preserve-3d;
+    width: 1.8em;
+    transform: translateZ(0);
+}
+
+.card__bottom {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    border-top: solid 1px #424242;
+    background: #424242;
+    border-radius: 0 0 0.15em 0.15em;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.card__bottom::after {
+    display: block;
+    margin-top: -0.72em;
+}
+
+.card__back::before,
+.card__bottom::after {
+    content: attr(data-value);
+}
+
+.card__back {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    left: 0%;
+    pointer-events: none;
+}
+
+.card__back::before {
+    position: relative;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.flip .card__back::before {
+    animation: flipTop 0.3s cubic-bezier(0.37, 0.01, 0.94, 0.35);
+    animation-fill-mode: both;
+    transform-origin: center bottom;
+}
+
+.flip .card__back .card__bottom {
+    transform-origin: center top;
+    animation-fill-mode: both;
+    animation: flipBottom 0.6s cubic-bezier(0.15, 0.45, 0.28, 1);
+}
+
+@keyframes flipTop {
+    0% {
+        transform: rotateX(0deg);
+        z-index: 2;
+    }
+    0%,
+    99% {
+        opacity: 0.99;
+    }
+    100% {
+        transform: rotateX(-90deg);
+        opacity: 0;
+    }
+}
+
+@keyframes flipBottom {
+    0%,
+    50% {
+        z-index: -1;
+        transform: rotateX(90deg);
+        opacity: 0;
+    }
+    51% {
+        opacity: 0.99;
+    }
+    100% {
+        opacity: 0.99;
+        transform: rotateX(0deg);
+        z-index: 5;
+    }
+}
+
+.currency-sign {
+    font-size: 14px;
+    margin-top: 4px;
+    font-weight: normal;
+}
+
+.round-result .offer-price {
+    padding: 4px;
+    font-family: 'Phosphorus';
+}
+
+@keyframes edit-offer-slide-in {
+    0% {
+        right: -333px;
+    }
+    100% {
+        right: 15px;
+    }
+}
+
+@keyframes auction-pane-slide-in {
+    0% {
+        left: -230px;
+    }
+    100% {
+        left: 15px;
+    }
+}
+
+.avatar.no-player {
+    background: gainsboro;
 }

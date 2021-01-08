@@ -19,10 +19,39 @@ class Timer extends React.Component {
     }
 }
 
+class FlipTimer extends React.Component {
+    render() {
+        const
+            data = this.props.data,
+            game = this.props.game;
+        return <div
+            className={cs("timer", "flip-clock", {active: data.phase !== 0 && data.timed && data.time})}>
+                                    <span className="flip-clock__piece flip">
+                                        <b className="flip-clock__card clock-card">
+                                            <b className="card__top">{game.minutes}</b>
+                                            <b className="card__bottom" data-value={game.minutes}/>
+                                            <b className="card__back" data-value={game.minutes}>
+                                                <b className="card__bottom" data-value={game.minutes}/>
+                                            </b>
+                                        </b>
+                                    </span>
+            <span className="flip-clock__piece flip">
+                                        <b className="flip-clock__card clock-card">
+                                            <b className="card__top">{game.seconds}</b>
+                                            <b className="card__bottom" data-value={game.seconds}/>
+                                            <b className="card__back" data-value={game.seconds}>
+                                                <b className="card__bottom" data-value={game.seconds}/>
+                                            </b>
+                                        </b>
+                                    </span>
+        </div>;
+    }
+}
+
 class Balance extends React.Component {
     render() {
         const value = this.props.value;
-        return `${value < 0 ? "−" : ""}$${Math.abs(value)}`;
+        return `${value < 0 ? "−" : ""}${Math.abs(value)}`;
     }
 }
 
@@ -100,19 +129,23 @@ class PlayerSlot extends React.Component {
                 data = this.props.data,
                 slot = this.props.slot,
                 game = this.props.game,
-                player = data.playerSlots[slot];
+                player = data.playerSlots[slot],
+                hasAvatar = player !== null && data.playerAvatars[player];
             return (
                 <div
-                    className={cs("player-slot", `player-slot-${slot}`, {
+                    className={cs("player-slot", "ornament-border", `player-slot-${slot}`, {
                         "no-player": player === null
                     })}>
                     <div className="player-section">
-                        <div className={cs("avatar", {"no-player": player === null})}
+                        <div className={cs("avatar",
+                            {"no-player": player === null, hasAvatar, [`bg-color-${slot}`]: !hasAvatar})}
                              onTouchStart={(e) => e.target.focus()}
                              style={{
-                                 "background-image": player !== null ? `url(/panic-on-wall-street/${data.playerAvatars[player]
-                                     ? `avatars/${player}/${data.playerAvatars[player]}.png`
-                                     : "default-user.png"})` : ""
+                                 "background-image": player !== null
+                                     ? `url(/panic-on-wall-street/${data.playerAvatars[player]
+                                         ? `avatars/${player}/${data.playerAvatars[player]}.png`
+                                         : `media/avatars/${data.defaultAvatars[slot]}.png`})`
+                                     : ""
                              }}>
                             {player === data.userId
                                 ? (<div className="set-avatar-button">
@@ -141,20 +174,25 @@ class BuyerSlot extends React.Component {
                 slot = this.props.slot,
                 game = this.props.game,
                 buyer = data.buyers[slot],
-                player = data.playerSlots[slot];
+                player = data.playerSlots[slot],
+                hasAvatar = player !== null && data.playerAvatars[player];
             return (
                 <div
-                    className={cs("player-slot", `player-slot-${slot}`, {
+                    className={cs("player-slot", "ornament-border", `player-slot-${slot}`, {
                         "no-player": player === null,
                         bankrupt: data.bankrupts.includes(slot)
                     })}>
                     <div className="player-section">
-                        <div className={cs("avatar", {"no-player": player === null})}
+                        <div className={cs("avatar", {
+                            "no-player": player === null,
+                            hasAvatar,
+                            [`bg-color-${slot}`]: !hasAvatar
+                        })}
                              onTouchStart={(e) => e.target.focus()}
                              style={{
                                  "background-image": player !== null ? `url(/panic-on-wall-street/${data.playerAvatars[player]
                                      ? `avatars/${player}/${data.playerAvatars[player]}.png`
-                                     : "default-user.png"})` : ""
+                                     : `media/avatars/${data.defaultAvatars[slot]}.png`})` : ""
                              }}>
                             {player === data.userId
                                 ? (<div className="set-avatar-button">
@@ -189,19 +227,24 @@ class SellerSlot extends React.Component {
                 seller = data.sellers[slot],
                 player = data.playerSlots[slot],
                 needPledge = slot == data.userSlot && data.phase === 5
-                    && data.sellers[data.userSlot]?.balance < 0 && !data.bankrupts.includes(data.userSlot);
+                    && data.sellers[data.userSlot]?.balance < 0 && !data.bankrupts.includes(data.userSlot),
+                hasAvatar = player !== null && data.playerAvatars[player];
             return <div className="seller-section">
-                <div className={cs("player-slot", `player-slot-${slot}`, {
+                <div className={cs("player-slot", "ornament-border", `player-slot-${slot}`, {
                     "no-player": player === null,
                     bankrupt: data.bankrupts.includes(slot)
                 })}>
                     <div className="player-section">
-                        <div className={cs("avatar", {"no-player": player === null})}
+                        <div className={cs("avatar", {
+                            "no-player": player === null,
+                            hasAvatar,
+                            [`bg-color-${slot}`]: !hasAvatar
+                        })}
                              onTouchStart={(e) => e.target.focus()}
                              style={{
                                  "background-image": player !== null ? `url(/panic-on-wall-street/${data.playerAvatars[player]
                                      ? `avatars/${player}/${data.playerAvatars[player]}.png`
-                                     : "default-user.png"})` : ""
+                                     : `media/avatars/${data.defaultAvatars[slot]}.png`})` : ""
                              }}>
                             {player === data.userId
                                 ? (<div className="set-avatar-button">
@@ -216,17 +259,18 @@ class SellerSlot extends React.Component {
                         <div className="player-balance"><Balance value={seller.balance}/></div>
                     </div>
                     <div className="seller-stocks">{
-                        ["red", "red2x", "yellow", "yellow2x", "blue", "blue2x", "green", "green2x"].map((stock) =>
+                        ["red", "red2x", "yellow", "yellow2x", "green", "green2x", "blue", "blue2x"].map((stock) =>
                             (<div
                                 onClick={() => seller.stocks[stock]
                                     && game.handleClickOfferAddStock(stock, false, slot)}
                                 className={cs("stock", stock, {
-                                    hasStocks: !!seller.stocks[stock]
+                                    hasStocks: !!seller.stocks[stock],
+                                    noStocks: !seller.stocks[stock]
                                 })}>
-                                <div className={cs("stock-icon", {
+                                <div className={cs("stock-icon", "stock-icon-full", {
                                     needPledge: seller.stocks[stock] > 0 && needPledge
                                 })}>{stock.endsWith("2x")
-                                    ? <i className="material-icons">looks_two</i>
+                                    ? <div className="stock-icon-2x">2x</div>
                                     : ""}</div>
                                 <div className="stock-count">{seller.stocks[stock] || 0}</div>
                             </div>)
@@ -243,51 +287,53 @@ class SellerSlot extends React.Component {
                                 offerWantFinalize = offer.playerWantFinalize != null,
                                 offerCanAccept = data.userSlot == slot && !offer.finalized,
                                 offerCanFinalize = offer.accepted && !offer.finalized && (data.userSlot == slot || data.userSlot == offer.player);
-                            return <div className={cs("offer", {
-                                adding: data.offerPane?.slot === slot && data.offerPane?.offerInd === offerInd
-                            })}>
-                                <div className={cs("offer-background", `bg-color-${offer.player}`)}/>
-                                <div className={cs("offer-border", `text-color-${offer.player}`)}/>
-                                <div className="offer-stocks">{Object.keys(offer.stocks).map((stock) => (
-                                    <div className={`offer-stock stock ${stock}`}>
-                                        <div className="stock-icon"/>
-                                        x
-                                        {offer.stocks[stock]}</div>))}</div>
-                                <div className="spacer"/>
-                                <div className="offer-price">${offer.price}</div>
-                                &nbsp;
-                                <div className={cs("offer-checkbox", {
-                                    "offer-accepted": offer.accepted,
-                                    "offer-finalized": offer.finalized,
-                                    "offer-can-accept": offerCanAccept,
-                                    "offer-can-finalize": offerCanFinalize,
-                                    "want-finalize": offerWantFinalize
+                            return <div className="offer-wrap">
+                                <div className={cs("offer", "ornament-border", `border-color-${offer.player}`, {
+                                    adding: data.offerPane?.slot === slot && data.offerPane?.offerInd === offerInd
                                 })}>
-                                    <>
-                                        {(offerCanFinalize || offerWantFinalize)
-                                            ? <div className="button-finalize">
-                                                {offerWantFinalize
-                                                    ? <svg className="finalize-anim" xmlns="http://www.w3.org/2000/svg">
-                                                        <circle className="finalize-circle"/>
-                                                    </svg>
-                                                    : ""}
-                                                <i className="material-icons"
-                                                   onClick={() => game.handleClickToggleFinalizeOffer(parseInt(slot), offerInd)}>
-                                                    gavel
-                                                </i>
-                                            </div>
-                                            : ""}
-                                        {offer.accepted
-                                            ? <i className="material-icons button-accept"
-                                                 onClick={() => offerCanAccept
-                                                     && game.handleClickToggleAcceptOffer(offerInd)}>check_box</i>
-                                            : <i className="material-icons button-accept"
-                                                 onClick={() => offerCanAccept
-                                                     && game.handleClickToggleAcceptOffer(offerInd)}>check_box_outline_blank</i>}
-                                    </>
+                                    <div className="offer-stocks">{Object.keys(offer.stocks).map((stock) => (
+                                        <div className={`offer-stock stock ${stock}`}>
+                                            <div className="stock-icon"/>
+                                            x
+                                            {offer.stocks[stock]}</div>))}</div>
+                                    <div className="spacer"/>
+                                    <div className="offer-price">${offer.price}</div>
+                                    &nbsp;
+                                    <div className={cs("offer-checkbox", {
+                                        "offer-accepted": offer.accepted,
+                                        "offer-finalized": offer.finalized,
+                                        "offer-can-accept": offerCanAccept,
+                                        "offer-can-finalize": offerCanFinalize,
+                                        "want-finalize": offerWantFinalize
+                                    })}>
+                                        <>
+                                            {(offerCanFinalize || offerWantFinalize)
+                                                ? <div className="button-finalize">
+                                                    {offerWantFinalize
+                                                        ? <svg className="finalize-anim"
+                                                               xmlns="http://www.w3.org/2000/svg">
+                                                            <circle className="finalize-circle"/>
+                                                        </svg>
+                                                        : ""}
+                                                    <i className="material-icons"
+                                                       onClick={() => game.handleClickToggleFinalizeOffer(parseInt(slot), offerInd)}>
+                                                        gavel
+                                                    </i>
+                                                </div>
+                                                : ""}
+                                            {offer.accepted
+                                                ? <i className="material-icons button-accept"
+                                                     onClick={() => offerCanAccept
+                                                         && game.handleClickToggleAcceptOffer(offerInd)}>check_box</i>
+                                                : <i className="material-icons button-accept"
+                                                     onClick={() => offerCanAccept
+                                                         && game.handleClickToggleAcceptOffer(offerInd)}>check_box_outline_blank</i>}
+                                        </>
+                                    </div>
                                 </div>
+
                                 {offer.player == data.userSlot && !offer.finalized
-                                    ? <div className="offer-buttons">
+                                    ? <div className={cs("offer-buttons", `border-color-${offer.player}`)}>
                                         <i onClick={() => game.handleClickEditOffer(slot, offerInd)}
                                            className="material-icons settings-button">edit</i>
                                         <i onClick={() => game.socket.emit("remove-offer", slot, offerInd)}
@@ -298,7 +344,7 @@ class SellerSlot extends React.Component {
                         })}
                         {data.buyers[data.userSlot]
                             ? <div onClick={() => game.handleClickEditOffer(slot, null)}
-                                   className={cs("add-offer", {
+                                   className={cs("add-offer", "ornament-border", {
                                        adding: data.offerPane?.slot === slot && data.offerPane?.offerInd === null
                                    })}>+</div>
                             : ""}
@@ -393,27 +439,27 @@ class Game extends React.Component {
         this.socket.on("message", text => {
             popup.alert({content: text});
         });
-        this.stockSold = new Audio("/panic-on-wall-street/stockSold.mp3");
+        this.stockSold = new Audio("/panic-on-wall-street/media/stockSold.mp3");
         this.stockSold.volume = 0.2;
-        this.bid = new Audio("/panic-on-wall-street/bid.mp3");
+        this.bid = new Audio("/panic-on-wall-street/media/bid.mp3");
         this.bid.volume = 0.2;
-        this.notSold = new Audio("/panic-on-wall-street/notSold.mp3");
+        this.notSold = new Audio("/panic-on-wall-street/media/notSold.mp3");
         this.notSold.volume = 0.2;
-        this.income = new Audio("/panic-on-wall-street/income.mp3");
+        this.income = new Audio("/panic-on-wall-street/media/income.mp3");
         this.income.volume = 0.2;
-        this.score = new Audio("/panic-on-wall-street/score.mp3");
+        this.score = new Audio("/panic-on-wall-street/media/score.mp3");
         this.score.volume = 0.1;
-        this.askFinalize = new Audio("/panic-on-wall-street/askFinalize.mp3");
+        this.askFinalize = new Audio("/panic-on-wall-street/media/askFinalize.mp3");
         this.askFinalize.volume = 0.2;
-        this.deal = new Audio("/panic-on-wall-street/deal.mp3");
+        this.deal = new Audio("/panic-on-wall-street/media/deal.mp3");
         this.deal.volume = 0.2;
-        this.finalizeOffer = new Audio("/panic-on-wall-street/finalizeOffer.mp3");
+        this.finalizeOffer = new Audio("/panic-on-wall-street/media/finalizeOffer.mp3");
         this.finalizeOffer.volume = 0.2;
-        this.phase1End = new Audio("/panic-on-wall-street/phase1End.wav");
+        this.phase1End = new Audio("/panic-on-wall-street/media/phase1End.wav");
         this.phase1End.volume = 0.2;
-        this.diceSet = new Audio("/panic-on-wall-street/diceSet.wav");
+        this.diceSet = new Audio("/panic-on-wall-street/media/diceSet.wav");
         this.diceSet.volume = 0.2;
-        this.tick = new Audio("/panic-on-wall-street/tick.mp3");
+        this.tick = new Audio("/panic-on-wall-street/media/tick.mp3");
         this.tick.volume = 0.4;
     }
 
@@ -586,8 +632,8 @@ class Game extends React.Component {
         }));
     }
 
-    handleClickOfferChangePrice(decrease) {
-        const result = this.state.offerPane.price + (decrease ? -5 : 5);
+    handleClickOfferChangePrice(amount) {
+        const result = this.state.offerPane.price + amount;
         if (result >= 5)
             this.state.offerPane.price = result;
         this.setState(this.state);
@@ -638,6 +684,33 @@ class Game extends React.Component {
     handleToggleMuteSounds() {
         localStorage.muteSounds = !parseInt(localStorage.muteSounds) ? 1 : 0;
         this.setState(Object.assign({}, this.state));
+    }
+
+    updateClock() {
+        if (this.prevMinutes !== this.minutes)
+            this.updateTimerFlipEl(
+                document.getElementsByClassName("flip-clock__piece")[0],
+                this.minutes,
+                this.prevMinutes
+            );
+        if (this.prevSeconds !== this.seconds)
+            this.updateTimerFlipEl(
+                document.getElementsByClassName("flip-clock__piece")[1],
+                this.seconds,
+                this.prevSeconds
+            );
+    }
+
+    updateTimerFlipEl(el, value, prevValue) {
+        if (el) {
+            el.getElementsByClassName("card__back")[0].setAttribute("data-value", prevValue);
+            el.getElementsByClassName("card__bottom")[0].setAttribute("data-value", prevValue);
+            el.getElementsByClassName("card__top")[0].innerText = value;
+            el.getElementsByClassName("card__bottom")[1].setAttribute("data-value", value);
+            el.classList.remove("flip");
+            void el.offsetHeight;
+            el.classList.add("flip");
+        }
     }
 
     render() {
@@ -694,16 +767,27 @@ class Game extends React.Component {
                 }
                 if (!data.paused) {
                     let timeStart = new Date();
-                    this.timerTimeout = setTimeout(() => {
+                    this.timerTimeout = setInterval(() => {
                         if (!this.state.paused && this.state.time > 0) {
                             let prevTime = this.state.time,
                                 time = prevTime - (new Date() - timeStart);
-                            this.setState(Object.assign({}, this.state, {time: time}));
+                            if ([1, 5].includes(this.state.phase)) {
+                                this.state.time = time;
+                                const date = new Date(this.state.time).toUTCString().match(/\d\d:(\d\d):(\d\d)/);
+                                this.prevMinutes = this.minutes;
+                                this.prevSeconds = this.seconds;
+                                this.minutes = date[1];
+                                this.seconds = date[2];
+                                this.updateClock();
+                            } else {
+                                this.setState(Object.assign({}, this.state, {time: time}));
+                            }
                             if (this.state.phase === 1 && !this.isMuted() && this.state.timed
                                 && time < 8000 && ((Math.floor(prevTime / 1000) - Math.floor(time / 1000)) > 0))
                                 this.tick.play();
+                            timeStart = new Date();
                         }
-                    }, 100);
+                    }, 200);
                 }
                 const activeSlots = [];
                 data.playerSlots.forEach((userId, slot) => {
@@ -726,8 +810,8 @@ class Game extends React.Component {
                                         <SellerSlot data={data} slot={slot} game={this}/>))}
                                 </div>
                             </>}
+                            <div className="spacer"/>
                             <div className="bottom-pane">
-                                {![0, 3, 4, 6].includes(data.phase) ? <Timer time={data.timed && data.time}/> : ""}
                                 <div className="buyer-slots">
                                     {!showEmptySlots ? Object.keys(data.buyers)
                                         .slice(0, Math.floor(Object.keys(data.buyers).length / 2)).map((slot) => (
@@ -735,6 +819,9 @@ class Game extends React.Component {
                                     <div className={cs("stocks-table", {
                                         randomize: data.phase === 2
                                     })}>
+                                        {[1, 5].includes(data.phase) ?
+                                            <FlipTimer data={data} game={this}/>
+                                            : ""}
                                         <div className="status-message">{status}</div>
                                         {Object.keys(data.diceValues).map((stock) => (
                                             <div className={`stocks-line stocks-line-${stock}`}>
@@ -789,72 +876,29 @@ class Game extends React.Component {
                             ) : ""}
                             {data.offerPane ?
                                 <div className="offer-pane">
-                                    <div className="offer-top-row">
+                                    <div className="offer-pane-title">Offer</div>
+                                    <div className="offer-price-edit">
+                                        <div className="spacer"/>
+                                        <div className="offer-price-down double"
+                                             onClick={() => this.handleClickOfferChangePrice(-10)}>
+                                            <i className="material-icons">fast_rewind</i>
+                                        </div>
+                                        <div className="offer-price-down"
+                                             onClick={() => this.handleClickOfferChangePrice(-5)}>
+                                            <i className="material-icons">arrow_left</i>
+                                        </div>
                                         <div className="offer-price">
-                                            <div className="offer-price-up"
-                                                 onClick={() => this.handleClickOfferChangePrice()}>
-                                                <i className="material-icons">expand_less</i>
-                                            </div>
-                                            <div className="offer-price-value">
-                                                ${data.offerPane.price}
-                                            </div>
-                                            <div className="offer-price-down"
-                                                 onClick={() => this.handleClickOfferChangePrice(true)}>
-                                                <i className="material-icons">expand_more</i>
-                                            </div>
+                                            ${data.offerPane.price}
                                         </div>
-                                        <div className="stocks-pane">
-                                            {Object.keys(data.offerPane.stocks).map((stock) =>
-                                                <div className={`offer-stock stock ${stock}`}>
-                                                    <div className="offer-stock-count">
-                                                        <div className={cs("offer-stock-up", {
-                                                            inactive: hasStocks(stock)
-                                                        })}
-                                                             onClick={() => this.handleClickOfferAddStock(stock)}>
-                                                            <i className="material-icons">expand_less</i>
-                                                        </div>
-                                                        <div className="offer-stock-count-value">
-                                                            {data.offerPane.stocks[stock]}
-                                                        </div>
-                                                        <div className="offer-stock-down"
-                                                             onClick={() => this.handleClickOfferAddStock(stock, true)}>
-                                                            <i className="material-icons">expand_more</i>
-                                                        </div>
-                                                    </div>
-                                                    <div className="offer-stock-icon">
-                                                        <div className="stock-icon">{stock.endsWith("2x")
-                                                            ? <i className="material-icons">looks_two</i>
-                                                            : ""}</div>
-                                                    </div>
-                                                </div>
-                                            )}
+                                        <div className="offer-price-up"
+                                             onClick={() => this.handleClickOfferChangePrice(5)}>
+                                            <i className="material-icons">arrow_right</i>
                                         </div>
-                                    </div>
-                                    <div className="offer-add-stock">
-                                        <div className="offer-add-icon">
-                                            <i className="material-icons">add_box</i>
+                                        <div className="offer-price-up double"
+                                             onClick={() => this.handleClickOfferChangePrice(10)}>
+                                            <i className="material-icons">fast_forward</i>
                                         </div>
-                                        <div className="offer-add-controls">
-                                            <div className="offer-add-stock-row">
-                                                {["red", "yellow", "green", "blue"].map((stock) =>
-                                                    (<div className={cs("stock", stock, {
-                                                        inactive: hasStocks(stock)
-                                                    })}
-                                                          onClick={() => this.handleClickOfferAddStock(stock)}>
-                                                        <div className="stock-icon"/>
-                                                    </div>))}
-                                            </div>
-                                            <div className="offer-add-stock-row offer-add-stock-row-2x">
-                                                {["red2x", "yellow2x", "green2x", "blue2x"].map((stock) =>
-                                                    (<div className={cs("stock", stock, {
-                                                        inactive: hasStocks(stock)
-                                                    })}
-                                                          onClick={() => this.handleClickOfferAddStock(stock)}>
-                                                        <div className="stock-icon"><i
-                                                            className="material-icons">looks_two</i></div>
-                                                    </div>))}
-                                            </div>
-                                        </div>
+                                        <div className="spacer"/>
                                         <div className="offer-add-save">
                                             <i className="material-icons cancel"
                                                onClick={() => this.handleClickHideEditOffer()}>cancel_presentation</i>
@@ -862,11 +906,50 @@ class Game extends React.Component {
                                                onClick={() => this.handleClickSaveEditOffer()}>check_box</i>
                                         </div>
                                     </div>
+                                    <div className="offer-add-stock">
+                                        {["red", "yellow", "green", "blue", "red2x", "yellow2x", "green2x", "blue2x"]
+                                            .map((stock) =>
+                                                (<>
+                                                    <div className={cs("stock", stock, {
+                                                        noStocks: hasStocks(stock),
+                                                        hasStocks: !hasStocks(stock)
+                                                    })}
+                                                         onClick={() => this.handleClickOfferAddStock(stock)}>
+                                                        <div className="stock-icon stock-icon-full">
+                                                            {stock.endsWith("2x")
+                                                                ? <div className="stock-icon-2x">2x</div>
+                                                                : ""}
+                                                        </div>
+                                                        <div className="stock-count">
+                                                            {data.sellers[data.offerPane.slot].stocks[stock]
+                                                                ? (data.sellers[data.offerPane.slot].stocks[stock] - (data.offerPane.stocks[stock] || 0))
+                                                                : 0}
+                                                        </div>
+                                                    </div>
+                                                    <div className="offer-stock-count">
+                                                        <div className={cs("offer-stock-up", {
+                                                            inactive: hasStocks(stock)
+                                                        })}
+                                                             onClick={() => this.handleClickOfferAddStock(stock)}>
+                                                            <i className="material-icons">keyboard_arrow_up</i>
+                                                        </div>
+                                                        <div className="offer-stock-count-value">
+                                                            {data.offerPane.stocks[stock] || 0}
+                                                        </div>
+                                                        <div className={cs("offer-stock-down", {
+                                                            inactive: !data.offerPane.stocks[stock]
+                                                        })}
+                                                             onClick={() => this.handleClickOfferAddStock(stock, true)}>
+                                                            <i className="material-icons">keyboard_arrow_down</i>
+                                                        </div>
+                                                    </div>
+                                                </>))}
+                                    </div>
                                 </div>
                                 : ""}
                             {(data.phase === 3 || data.phase === 4) ?
                                 <div className="round-result-wrap">
-                                    <div className="round-result">
+                                    <div className="round-result ornament-border">
                                         <div className="round-result-title">
                                             Раунд {data.round}
                                             <Timer time={data.timed && data.time}/>
@@ -878,7 +961,6 @@ class Game extends React.Component {
                                                 <span className={cs("buyer-income-name", `bg-color-${buyer}`)}>
                                                     {data.playerNames[data.playerSlots[buyer]] || "<Пусто>"}
                                                 </span>
-                                                    <div className={cs("offer-border", `text-color-${buyer}`)}/>
                                                     {data.buyers[buyer].roundResult
                                                         ? (() => {
                                                             const result = data.buyers[buyer].roundResult;
@@ -907,8 +989,8 @@ class Game extends React.Component {
                                                                     </>
                                                                     : ""}
                                                                 <span className="spacer"/>
-                                                                <span className="balance">
-                                                                = <Balance value={data.buyers[buyer].balance}/>
+                                                                <span className="offer-price">
+                                                                $<Balance value={data.buyers[buyer].balance}/>
                                                             </span>
                                                             </>;
                                                         })() : ""}
@@ -922,7 +1004,6 @@ class Game extends React.Component {
                                                 <span className={cs("seller-income-name", `bg-color-${seller}`)}>
                                                     {data.playerNames[data.playerSlots[seller]] || "<Empty>"}
                                                 </span>
-                                                    <div className={cs("offer-border", `text-color-${seller}`)}/>
                                                     {data.sellers[seller].roundResult
                                                         ? (() => {
                                                             const result = data.sellers[seller].roundResult;
@@ -938,8 +1019,8 @@ class Game extends React.Component {
                                                                 &nbsp;− ${Math.abs(result.overallOutcome)}&nbsp;
                                                             </span>
                                                                 <span className="spacer"/>
-                                                                <span className="balance">
-                                                                = <Balance value={data.sellers[seller].balance}/>
+                                                                <span className="offer-price">
+                                                                $<Balance value={data.sellers[seller].balance}/>
                                                             </span>
                                                             </>;
                                                         })() : ""}
@@ -951,28 +1032,32 @@ class Game extends React.Component {
                                 : ""}
                             {data.phase === 6 ?
                                 <div className="auction-pane">
-                                    <Timer time={data.timed && data.time}/>
-                                    <div className="auction-stock">
-                                        <div className={cs("stock", data.auctionStock)}>
-                                            <div className="stock-icon">
-                                                {data.auctionStock.endsWith("2x")
-                                                    ? <i className="material-icons">looks_two</i>
-                                                    : ""}
-                                                <div className="auction-stock-left">
-                                                    {data.auctionStocksTotal - data.auctionStocksLeft + 1}/{data.auctionStocksTotal}
+                                    <div className="auction-pane-inner">
+                                        <div className="auction-stock-left">
+                                            {data.auctionStocksTotal - data.auctionStocksLeft + 1}/{data.auctionStocksTotal}
+                                        </div>
+                                        <Timer time={data.timed && data.time}/>
+                                        <div className="auction-stock">
+                                            <div className={cs("stock", data.auctionStock)}>
+                                                <div className="stock-icon stock-icon-full">
+                                                    {data.auctionStock.endsWith("2x")
+                                                        ? <div className="stock-icon-2x">2x</div>
+                                                        : ""}
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="auction-bid">
-                                        ${data.auctionBid}
-                                    </div>
-                                    <div className="auction-bidder">
-                                        Покупатель:&nbsp;
-                                        {data.auctionBidder !== null
-                                            ? data.playerNames[data.playerSlots[data.auctionBidder]]
-                                            : "Нет"
-                                        }
+                                        <div className="auction-bid">
+                                            <span className={"currency-sign"}>$</span>{data.auctionBid}
+                                        </div>
+                                        <div className="auction-bidder-title">
+                                            Покупатель
+                                        </div>
+                                        <div className={cs("auction-bidder", `bg-color-${data.auctionBidder}`)}>
+                                            {data.auctionBidder !== null
+                                                ? data.playerNames[data.playerSlots[data.auctionBidder]]
+                                                : "Нет"
+                                            }
+                                        </div>
                                     </div>
                                     <div className={cs("auction-controls", {
                                         inactive: data.biddingCooldown || !data.sellers[data.userSlot]
@@ -986,7 +1071,7 @@ class Game extends React.Component {
                                     </div>
                                 </div>
                                 : ""}
-                            <div className="rules panel"><a href="/panic-on-wall-street/PoWS_RulesList.png"
+                            <div className="rules panel"><a href="media/PoWS_RulesList.png"
                                                             target="_blank">Как играть?</a></div>
                             <HostControls
                                 app={this}

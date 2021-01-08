@@ -38,6 +38,7 @@ function init(wsServer, path) {
                     bankrupts: new JSONSet(),
                     sellers: {},
                     buyers: {},
+                    defaultAvatars: {},
                     playerSlots: Array(11).fill(null),
                     teamsLocked: false,
                     playerAvatars: {},
@@ -86,6 +87,13 @@ function init(wsServer, path) {
                     room.playerSlots[ind] = `kek${ind}`;
                     room.playerNames[`kek${ind}`] = `kek${ind}`;
                 });
+            let avatars = [];
+            avatars = [...avatars, ...Array(7).fill(null).map((_, index) => `sell${index + 1}`)];
+            avatars = [...avatars, ...Array(7).fill(null).map((_, index) => `buy${index + 1}`)];
+            shuffleArray(avatars);
+            Array(11).fill(null).forEach((_, index) => {
+                room.defaultAvatars[index] = avatars.pop();
+            });
             let interval, timeouts = [];
             this.room = room;
             this.state = state;
@@ -155,10 +163,14 @@ function init(wsServer, path) {
                         room.sellers = {};
                         room.buyers = {};
 
-                        while (sellersCount--)
-                            room.sellers[getRandomPlayer(
+                        const sellerAvatars = shuffleArray(Array(7).fill(null).map((_, index) => `sell${index + 1}`));
+                        const buyerAvatars = shuffleArray(Array(7).fill(null).map((_, index) => `buy${index + 1}`));
+
+                        while (sellersCount--) {
+                            const sellerSlot = getRandomPlayer(
                                 [...room.wantSellerList].map((player) => room.playerSlots.indexOf(player)),
-                                [...Object.keys(room.sellers)])] = {
+                                [...Object.keys(room.sellers)]);
+                            room.sellers[sellerSlot] = {
                                 balance: 120,
                                 // offers: [{player: 1, price: 10, stocks: {red: 2, blue2x: 1}, accepted: true, finalized: false, playerWantFinalize: 1  }]
                                 offers: [],
@@ -169,12 +181,17 @@ function init(wsServer, path) {
                                 }, {}),
                                 needPledge: false
                             };
-                        while (buyersCount--)
-                            room.buyers[getRandomPlayer(
+                            room.defaultAvatars[sellerSlot] = sellerAvatars.pop();
+                        }
+                        while (buyersCount--) {
+                            const buyerSlot = getRandomPlayer(
                                 [...room.wantBuyerList].map((player) => room.playerSlots.indexOf(player)),
-                                [...Object.keys(room.sellers), ...Object.keys(room.buyers)])] = {
+                                [...Object.keys(room.sellers), ...Object.keys(room.buyers)]);
+                            room.buyers[buyerSlot] = {
                                 balance: 120
                             };
+                            room.defaultAvatars[buyerSlot] = buyerAvatars.pop();
+                        }
 
                         state.deck = shuffleArray([
                                 ...state.deck,
