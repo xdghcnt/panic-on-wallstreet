@@ -629,7 +629,7 @@ function init(wsServer, path) {
                         && !room.biddingCooldown
                         && room.sellers[slot]
                         && (room.sellers[slot].balance - (room.auctionBid + amount)) > 5
-                        && [5, 10].includes(amount)) {
+                        && amount > 0) {
                         room.auctionBid += amount;
                         room.auctionBidder = slot;
                         room.time = room.auctionStepTime * 1000;

@@ -15,10 +15,6 @@
     font-weight: bold;
 }
 
-.player.offline {
-    color: #b1afaf;
-}
-
 .player.offline .player-name-text {
     text-decoration: line-through;
 }
@@ -673,6 +669,7 @@ body {
     border: 7px double #8cbcab;
     padding: 2px;
     animation: auction-pane-slide-in 0.2s forwards;
+    z-index: 1;
 }
 
 .offer-stock {
@@ -895,7 +892,7 @@ body {
 }
 
 .offer-finalized {
-    color: #a7ff07;
+    color: #FF5722;
 }
 
 .finalize-anim {
@@ -967,13 +964,13 @@ body {
 }
 
 .auction-bid {
-    background: url(/panic-on-wall-street/media/auction-price-bg.png) 0;
+    background: url(/panic-on-wall-street/media/auction-price-bg.png) 0 no-repeat;
     font-weight: bold;
     font-size: 20px;
     margin-top: -7px;
     position: relative;
     width: 52px;
-    height: 52px;
+    height: 53px;
     display: flex;
     align-items: center;
     justify-content:  center;

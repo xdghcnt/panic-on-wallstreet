@@ -799,7 +799,9 @@ class Game extends React.Component {
                     showEmptySlots = data.phase === 0 && !data.teamsLocked,
                     slots = (showEmptySlots ? data.playerSlots : activeSlots)
                         .map((value, slot) => showEmptySlots ? slot : value);
-                const hasStocks = (stock) => data.sellers[data.offerPane.slot].stocks[stock] === data.offerPane.stocks[stock];
+                const hasStocks = (stock) => data.sellers[data.offerPane.slot].stocks[stock] === data.offerPane.stocks[stock],
+                    auctionBidMin = data.auctionBid < 30 ? 5 : 10,
+                    auctionBidMax = data.auctionBid < 30 ? 10 : 20
                 return (
                     <div className={cs("game")}>
                         <div className={cs("game-board", {active: this.state.inited})}>
@@ -880,7 +882,7 @@ class Game extends React.Component {
                                     <div className="offer-price-edit">
                                         <div className="spacer"/>
                                         <div className="offer-price-down double"
-                                             onClick={() => this.handleClickOfferChangePrice(-10)}>
+                                             onClick={() => this.handleClickOfferChangePrice(-50)}>
                                             <i className="material-icons">fast_rewind</i>
                                         </div>
                                         <div className="offer-price-down"
@@ -895,7 +897,7 @@ class Game extends React.Component {
                                             <i className="material-icons">arrow_right</i>
                                         </div>
                                         <div className="offer-price-up double"
-                                             onClick={() => this.handleClickOfferChangePrice(10)}>
+                                             onClick={() => this.handleClickOfferChangePrice(50)}>
                                             <i className="material-icons">fast_forward</i>
                                         </div>
                                         <div className="spacer"/>
@@ -959,7 +961,7 @@ class Game extends React.Component {
                                             {Object.keys(data.buyers).map((buyer) => (
                                                 <div className={cs("buyer-income-row")}>
                                                 <span className={cs("buyer-income-name", `bg-color-${buyer}`)}>
-                                                    {data.playerNames[data.playerSlots[buyer]] || "<Пусто>"}
+                                                    {data.playerNames[data.playerSlots[buyer]] || "Пусто"}
                                                 </span>
                                                     {data.buyers[buyer].roundResult
                                                         ? (() => {
@@ -1002,7 +1004,7 @@ class Game extends React.Component {
                                             {Object.keys(data.sellers).map((seller) => (
                                                 <div className={cs("seller-income-row")}>
                                                 <span className={cs("seller-income-name", `bg-color-${seller}`)}>
-                                                    {data.playerNames[data.playerSlots[seller]] || "<Empty>"}
+                                                    {data.playerNames[data.playerSlots[seller]] || "Пусто"}
                                                 </span>
                                                     {data.sellers[seller].roundResult
                                                         ? (() => {
@@ -1054,7 +1056,7 @@ class Game extends React.Component {
                                         </div>
                                         <div className={cs("auction-bidder", `bg-color-${data.auctionBidder}`)}>
                                             {data.auctionBidder !== null
-                                                ? data.playerNames[data.playerSlots[data.auctionBidder]]
+                                                ? data.playerNames[data.playerSlots[data.auctionBidder]] || "Пусто"
                                                 : "Нет"
                                             }
                                         </div>
@@ -1062,16 +1064,16 @@ class Game extends React.Component {
                                     <div className={cs("auction-controls", {
                                         inactive: data.biddingCooldown || !data.sellers[data.userSlot]
                                     })}>
-                                        <div className="auction-rise-button auction-rise-5"
-                                             onClick={() => this.handleClickBidStock(5)}>+5
+                                        <div className="auction-rise-button auction-rise-min"
+                                             onClick={() => this.handleClickBidStock(auctionBidMin)}>+{auctionBidMin}
                                         </div>
-                                        <div className="auction-rise-button auction-rise-10"
-                                             onClick={() => this.handleClickBidStock(10)}>+10
+                                        <div className="auction-rise-button auction-rise-max"
+                                             onClick={() => this.handleClickBidStock(auctionBidMax)}>+{auctionBidMax}
                                         </div>
                                     </div>
                                 </div>
                                 : ""}
-                            <div className="rules panel"><a href="media/PoWS_RulesList.png"
+                            <div className="rules panel"><a href="/panic-on-wall-street/media/PoWS_RulesList.pdf"
                                                             target="_blank">Как играть?</a></div>
                             <HostControls
                                 app={this}
