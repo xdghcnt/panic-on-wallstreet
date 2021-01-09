@@ -989,7 +989,7 @@ class Game extends React.Component {
                                                                 {result.overallOutcome !== 0
                                                                     ? <>
                                                                         <span
-                                                                            className="prev-balance">&nbsp;<Balance
+                                                                            className="prev-balance">&nbsp;$<Balance
                                                                             value={result.prevBalance}/></span>
                                                                         <span className="owned-stocks">{
                                                                             Object.keys(result.stocksOwned)
@@ -1030,7 +1030,7 @@ class Game extends React.Component {
                                                             const result = data.sellers[seller].roundResult;
                                                             return <>
                                                                 <span
-                                                                    className="prev-balance">&nbsp;<Balance
+                                                                    className="prev-balance">&nbsp;$<Balance
                                                                     value={result.prevBalance}/></span>
                                                                 {result.overallIncome
                                                                     ? <span

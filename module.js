@@ -294,13 +294,16 @@ function init(wsServer, path) {
                 showSellerIncome = (sellerIndex) => {
                     room.phase = 4;
                     const seller = room.sellers[Object.keys(room.sellers)[sellerIndex]];
-                    seller.stocksFinalized = {};
                     seller.roundResult = {
                         stocksSold: {},
                         overallIncome: 0,
                         overallOutcome: 0,
                         prevBalance: seller.balance
                     };
+                    Object.keys(seller.stocksFinalized).forEach((stock) => {
+                        seller.stocks[stock] += seller.stocksFinalized[stock];
+                        delete seller.stocksFinalized[stock];
+                    });
                     seller.offers.forEach((offer) => {
                         if (offer.accepted) {
                             Object.keys(offer.stocks).forEach((stock) => {
@@ -407,18 +410,20 @@ function init(wsServer, path) {
                         update();
                     }
                 },
-                startTimer = () => {
+                startTimer = (noReset) => {
                     clearInterval(interval);
                     if (room.timed && room.phase !== 0) {
-                        if (room.phase === 1)
-                            room.time = room.negotiationTime * 1000;
-                        else if (room.phase > 1 && room.phase < 5)
-                            room.time = RANDOMIZE_STEP_TIME * 4 + RANDOMIZE_STEP_TIME + SCORE_END_TIME + SCORE_STEP_TIME
-                                + SCORE_STEP_TIME * (Object.keys(room.buyers).length + Object.keys(room.sellers).length);
-                        else if (room.phase === 5)
-                            room.time = room.sellersPledgeTime * 1000;
-                        else if (room.phase === 6)
-                            room.time = (room.auctionStepTime * 1000) + 999;
+                        if (!noReset) {
+                            if (room.phase === 1)
+                                room.time = room.negotiationTime * 1000;
+                            else if (room.phase > 1 && room.phase < 5)
+                                room.time = RANDOMIZE_STEP_TIME * 4 + RANDOMIZE_STEP_TIME + SCORE_END_TIME + SCORE_STEP_TIME
+                                    + SCORE_STEP_TIME * (Object.keys(room.buyers).length + Object.keys(room.sellers).length);
+                            else if (room.phase === 5)
+                                room.time = room.sellersPledgeTime * 1000;
+                            else if (room.phase === 6)
+                                room.time = (room.auctionStepTime * 1000) + 999;
+                        }
                         let time = new Date();
                         interval = setInterval(() => {
                             if (!room.paused) {
@@ -635,17 +640,21 @@ function init(wsServer, path) {
                     if (room.phase === 6
                         && !room.biddingCooldown
                         && room.sellers[slot]
-                        && (room.sellers[slot].balance - (room.auctionBid + amount)) > 5
                         && amount > 0) {
-                        room.auctionBid += amount;
-                        room.auctionBidder = slot;
-                        room.time = room.auctionStepTime * 1000;
-                        room.biddingCooldown = true;
-                        timeouts.push(setTimeout(() => {
-                            room.biddingCooldown = false;
-                            update();
-                        }, 1000));
-                        startTimer();
+                        if ((room.sellers[slot].balance - 5) > room.auctionBid) {
+                            if ((room.sellers[slot].balance - 5 - amount) > room.auctionBid)
+                                room.auctionBid += amount;
+                            else
+                                room.auctionBid = room.sellers[slot].balance - 5;
+                            room.auctionBidder = slot;
+                            room.time = room.auctionStepTime * 1000;
+                            room.biddingCooldown = true;
+                            timeouts.push(setTimeout(() => {
+                                room.biddingCooldown = false;
+                                update();
+                            }, 1000));
+                            startTimer();
+                        }
                     }
                     update();
                 }
@@ -718,8 +727,11 @@ function init(wsServer, path) {
                 },
                 "toggle-pause": (user) => {
                     if (user === room.hostId) {
-                        if (room.phase !== 0)
+                        if (room.phase !== 0) {
                             room.paused = !room.paused;
+                            if (!room.paused)
+                                startTimer(true);
+                        }
                         else
                             startGame();
                         if (!room.paused)

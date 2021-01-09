@@ -7,7 +7,6 @@
     min-width: 500px;
     display: flex;
     flex-flow: column;
-    justify-content: space-around;
     height: 100%;
 }
 
@@ -44,6 +43,7 @@ body {
     color: white;
     padding: 22px;
     text-align: center;
+    background: #16413c8c;
 }
 
 .player {
@@ -198,6 +198,7 @@ body {
     text-overflow: ellipsis;
     overflow: hidden;
     padding: 2px 0px;
+    line-height: 18px;
 }
 
 .bg-color-0 {
