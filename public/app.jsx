@@ -946,7 +946,9 @@ class Game extends React.Component {
                                                             </div>
                                                             : ""}
                                                     </div>
-                                                    <div className="offer-stock-count">
+                                                    <div className={cs("offer-stock-count", {
+                                                        active: hasStocks
+                                                    })}>
                                                         <div className={cs("offer-stock-up", {
                                                             inactive: stockUpInactive
                                                         })}

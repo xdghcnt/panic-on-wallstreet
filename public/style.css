@@ -1463,3 +1463,11 @@ body {
 .avatar.no-player {
     background: gainsboro;
 }
+
+.offer-stock-count {
+    visibility: hidden;
+}
+
+.offer-stock-count.active {
+    visibility: visible;
+}
