@@ -259,21 +259,32 @@ class SellerSlot extends React.Component {
                         <div className="player-balance"><Balance value={seller.balance}/></div>
                     </div>
                     <div className="seller-stocks">{
-                        ["red", "red2x", "yellow", "yellow2x", "green", "green2x", "blue", "blue2x"].map((stock) =>
-                            (<div
-                                onClick={() => seller.stocks[stock]
-                                    && game.handleClickOfferAddStock(stock, false, slot)}
-                                className={cs("stock", stock, {
-                                    hasStocks: !!seller.stocks[stock],
-                                    noStocks: !seller.stocks[stock]
-                                })}>
-                                <div className={cs("stock-icon", "stock-icon-full", {
-                                    needPledge: seller.stocks[stock] > 0 && needPledge
-                                })}>{stock.endsWith("2x")
-                                    ? <div className="stock-icon-2x">2x</div>
-                                    : ""}</div>
-                                <div className="stock-count">{seller.stocks[stock] || 0}</div>
-                            </div>)
+                        ["red", "red2x", "yellow", "yellow2x", "green", "green2x", "blue", "blue2x"].map((stock) => {
+                                const stocksCount = (data.offerPane && data.offerPane.slot === slot)
+                                    ? data.sellers[data.offerPane.slot].stocks[stock]
+                                        ? data.sellers[data.offerPane.slot].stocks[stock] - (data.offerPane.stocks[stock] || 0)
+                                        - (data.sellers[data.offerPane.slot].stocksFinalized[stock] || 0)
+                                        : 0
+                                    : seller.stocks[stock]
+                                        ? (seller.stocks[stock] - (seller.stocksFinalized[stock] || 0))
+                                        : "";
+                                return <div
+                                    onClick={() => stocksCount
+                                        && game.handleClickOfferAddStock(stock, false, slot)}
+                                    className={cs("stock", stock, {
+                                        hasStocks: !!seller.stocks[stock],
+                                        noStocks: !seller.stocks[stock]
+                                    })}>
+                                    <div className={cs("stock-icon", "stock-icon-full", {
+                                        needPledge: seller.stocks[stock] > 0 && needPledge
+                                    })}>{stock.endsWith("2x")
+                                        ? <div className="stock-icon-2x">2x</div>
+                                        : ""}</div>
+                                    <div className="stock-count">{seller.stocks[stock]
+                                        ? stocksCount
+                                        : ""}</div>
+                                </div>;
+                            }
                         )
                     }</div>
                     {data.bankrupts.includes(slot)
@@ -799,9 +810,9 @@ class Game extends React.Component {
                     showEmptySlots = data.phase === 0 && !data.teamsLocked,
                     slots = (showEmptySlots ? data.playerSlots : activeSlots)
                         .map((value, slot) => showEmptySlots ? slot : value);
-                const hasStocks = (stock) => data.sellers[data.offerPane.slot].stocks[stock] === data.offerPane.stocks[stock],
+                const
                     auctionBidMin = data.auctionBid < 30 ? 5 : 10,
-                    auctionBidMax = data.auctionBid < 30 ? 10 : 20
+                    auctionBidMax = data.auctionBid < 30 ? 10 : 20;
                 return (
                     <div className={cs("game")}>
                         <div className={cs("game-board", {active: this.state.inited})}>
@@ -910,29 +921,36 @@ class Game extends React.Component {
                                     </div>
                                     <div className="offer-add-stock">
                                         {["red", "yellow", "green", "blue", "red2x", "yellow2x", "green2x", "blue2x"]
-                                            .map((stock) =>
-                                                (<>
+                                            .map((stock) => {
+                                                const
+                                                    stocksCount = data.sellers[data.offerPane.slot].stocks[stock]
+                                                        ? data.sellers[data.offerPane.slot].stocks[stock] - (data.offerPane.stocks[stock] || 0)
+                                                        - (data.sellers[data.offerPane.slot].stocksFinalized[stock] || 0)
+                                                        : 0,
+                                                    stockUpInactive = !stocksCount,
+                                                    hasStocks = data.sellers[data.offerPane.slot].stocks[stock];
+                                                return <>
                                                     <div className={cs("stock", stock, {
-                                                        noStocks: hasStocks(stock),
-                                                        hasStocks: !hasStocks(stock)
+                                                        noStocks: !hasStocks,
+                                                        hasStocks
                                                     })}
-                                                         onClick={() => this.handleClickOfferAddStock(stock)}>
+                                                         onClick={() => !stockUpInactive && this.handleClickOfferAddStock(stock)}>
                                                         <div className="stock-icon stock-icon-full">
                                                             {stock.endsWith("2x")
                                                                 ? <div className="stock-icon-2x">2x</div>
                                                                 : ""}
                                                         </div>
-                                                        <div className="stock-count">
-                                                            {data.sellers[data.offerPane.slot].stocks[stock]
-                                                                ? (data.sellers[data.offerPane.slot].stocks[stock] - (data.offerPane.stocks[stock] || 0))
-                                                                : 0}
-                                                        </div>
+                                                        {data.sellers[data.offerPane.slot].stocks[stock]
+                                                            ? <div className="stock-count">
+                                                                {stocksCount}
+                                                            </div>
+                                                            : ""}
                                                     </div>
                                                     <div className="offer-stock-count">
                                                         <div className={cs("offer-stock-up", {
-                                                            inactive: hasStocks(stock)
+                                                            inactive: stockUpInactive
                                                         })}
-                                                             onClick={() => this.handleClickOfferAddStock(stock)}>
+                                                             onClick={() => !stockUpInactive && this.handleClickOfferAddStock(stock)}>
                                                             <i className="material-icons">keyboard_arrow_up</i>
                                                         </div>
                                                         <div className="offer-stock-count-value">
@@ -945,7 +963,8 @@ class Game extends React.Component {
                                                             <i className="material-icons">keyboard_arrow_down</i>
                                                         </div>
                                                     </div>
-                                                </>))}
+                                                </>;
+                                            })}
                                     </div>
                                 </div>
                                 : ""}

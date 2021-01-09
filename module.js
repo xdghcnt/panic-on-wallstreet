@@ -151,6 +151,7 @@ function init(wsServer, path) {
                             ]
                         );
 
+                        room.activeSlots.clear();
                         room.playerSlots.forEach((player, slot) => {
                             if (player != null)
                                 room.activeSlots.add(slot);
@@ -172,8 +173,10 @@ function init(wsServer, path) {
                                 [...Object.keys(room.sellers)]);
                             room.sellers[sellerSlot] = {
                                 balance: 120,
-                                // offers: [{player: 1, price: 10, stocks: {red: 2, blue2x: 1}, accepted: true, finalized: false, playerWantFinalize: 1  }]
+                                // offers: [{player: 1, price: 10, stocks: {red: 2, blue2x: 1},  stocksFinalized: {red: 2, blue2x: 1},
+                                // accepted: true, finalized: false, playerWantFinalize: 1  }]
                                 offers: [],
+                                stocksFinalized: {},
                                 stocks: state.deck.splice(0, 3).reduce((res, stock) => {
                                     res[stock] = res[stock] || [];
                                     res[stock]++;
@@ -578,20 +581,23 @@ function init(wsServer, path) {
                         }
                     }
                 },
-                "ask-finalize-offer": (slot, seller, offerInd) => {
-                    if (room.phase === 1
-                        && room.sellers[seller]
-                        && (room.sellers[seller].offers[offerInd] && !room.sellers[seller].offers[offerInd].finalized)
-                        && room.sellers[seller].offers[offerInd].accepted
-                        && (slot === seller || slot === room.sellers[seller].offers[offerInd].player)) {
-                        const offer = room.sellers[seller].offers[offerInd];
+                "ask-finalize-offer": (slot, sellerId, offerInd) => {
+                    const
+                        seller = room.sellers[sellerId],
+                        offer = seller.offers[offerInd];
+                    if (room.phase === 1 && seller && (offer && !offer.finalized) && offer.accepted
+                        && (slot === sellerId || slot === offer.player)) {
                         if (offer.playerWantFinalize !== null && offer.playerWantFinalize !== slot) {
                             offer.playerWantFinalize = null;
                             offer.finalized = true;
+                            Object.keys(offer.stocks).forEach((stock) => {
+                                seller.stocksFinalized[stock] = seller.stocksFinalized[stock] || 0;
+                                seller.stocksFinalized[stock] += offer.stocks[stock];
+                            });
                             clearTimeout(this.finalizeTimeouts[slot + offerInd]);
                             send([
                                 room.playerSlots[slot],
-                                room.playerSlots[seller]
+                                room.playerSlots[sellerId]
                             ], "accept-finalize-offer");
                         } else if (offer.playerWantFinalize === slot) {
                             offer.playerWantFinalize = null;
@@ -600,7 +606,7 @@ function init(wsServer, path) {
                             offer.playerWantFinalize = slot;
                             send([
                                 room.playerSlots[slot],
-                                room.playerSlots[seller]
+                                room.playerSlots[sellerId]
                             ], "ask-finalize-offer");
                             this.finalizeTimeouts[slot + offerInd] = setTimeout(() => {
                                 offer.playerWantFinalize = null;
