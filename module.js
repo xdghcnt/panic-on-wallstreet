@@ -294,6 +294,7 @@ function init(wsServer, path) {
                 showSellerIncome = (sellerIndex) => {
                     room.phase = 4;
                     const seller = room.sellers[Object.keys(room.sellers)[sellerIndex]];
+                    seller.stocksFinalized = {};
                     seller.roundResult = {
                         stocksSold: {},
                         overallIncome: 0,
