@@ -300,10 +300,7 @@ function init(wsServer, path) {
                         overallOutcome: 0,
                         prevBalance: seller.balance
                     };
-                    Object.keys(seller.stocksFinalized).forEach((stock) => {
-                        seller.stocks[stock] += seller.stocksFinalized[stock];
-                        delete seller.stocksFinalized[stock];
-                    });
+                    seller.stocksFinalized = {};
                     seller.offers.forEach((offer) => {
                         if (offer.accepted) {
                             Object.keys(offer.stocks).forEach((stock) => {

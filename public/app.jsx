@@ -782,21 +782,23 @@ class Game extends React.Component {
                         if (!this.state.paused && this.state.time > 0) {
                             let prevTime = this.state.time,
                                 time = prevTime - (new Date() - timeStart);
-                            if ([1, 5].includes(this.state.phase)) {
-                                this.state.time = time;
-                                const date = new Date(this.state.time).toUTCString().match(/\d\d:(\d\d):(\d\d)/);
-                                this.prevMinutes = this.minutes;
-                                this.prevSeconds = this.seconds;
-                                this.minutes = date[1];
-                                this.seconds = date[2];
-                                this.updateClock();
-                            } else {
-                                this.setState(Object.assign({}, this.state, {time: time}));
+                            if (time > 0) {
+                                if ([1, 5].includes(this.state.phase)) {
+                                    this.state.time = time;
+                                    const date = new Date(this.state.time).toUTCString().match(/\d\d:(\d\d):(\d\d)/);
+                                    this.prevMinutes = this.minutes;
+                                    this.prevSeconds = this.seconds;
+                                    this.minutes = date[1];
+                                    this.seconds = date[2];
+                                    this.updateClock();
+                                } else {
+                                    this.setState(Object.assign({}, this.state, {time: time}));
+                                }
+                                if (this.state.phase === 1 && !this.isMuted() && this.state.timed
+                                    && time < 8000 && ((Math.floor(prevTime / 1000) - Math.floor(time / 1000)) > 0))
+                                    this.tick.play();
+                                timeStart = new Date();
                             }
-                            if (this.state.phase === 1 && !this.isMuted() && this.state.timed
-                                && time < 8000 && ((Math.floor(prevTime / 1000) - Math.floor(time / 1000)) > 0))
-                                this.tick.play();
-                            timeStart = new Date();
                         }
                     }, 200);
                 }
