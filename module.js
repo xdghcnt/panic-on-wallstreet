@@ -637,17 +637,21 @@ function init(wsServer, path) {
                     if (room.phase === 6
                         && !room.biddingCooldown
                         && room.sellers[slot]
-                        && (room.sellers[slot].balance - (room.auctionBid + amount)) >= 5
                         && amount > 0) {
-                        room.auctionBid += amount;
-                        room.auctionBidder = slot;
-                        room.time = room.auctionStepTime * 1000;
-                        room.biddingCooldown = true;
-                        timeouts.push(setTimeout(() => {
-                            room.biddingCooldown = false;
-                            update();
-                        }, 1000));
-                        startTimer();
+                        if ((room.sellers[slot].balance) > room.auctionBid) {
+                            if ((room.sellers[slot].balance - amount) > room.auctionBid)
+                                room.auctionBid += amount;
+                            else
+                                room.auctionBid = room.sellers[slot].balance;
+                            room.auctionBidder = slot;
+                            room.time = room.auctionStepTime * 1000;
+                            room.biddingCooldown = true;
+                            timeouts.push(setTimeout(() => {
+                                room.biddingCooldown = false;
+                                update();
+                            }, 1000));
+                            startTimer();
+                        }
                     }
                     update();
                 }
