@@ -390,8 +390,6 @@ class Game extends React.Component {
         initArgs.wssToken = window.wssToken;
         this.socket = window.socket.of("panic-on-wall-street");
         this.socket.on("state", (state) => {
-            if (this.state?.inited && state.phase === 0 && this.state.phase !== 0 && state.round === 5)
-                popup.alert({content: `Пройдите <a href="https://forms.gle/GZrLAKYmgHRWYmYXA" target="_blank">небольшой опрос</a> о прошедшей игре. Спасибо.`});
             CommonRoom.processCommonRoom(state, this.state, {
                 maxPlayers: 11,
                 largeImageKey: "panic-on-wall-street",
