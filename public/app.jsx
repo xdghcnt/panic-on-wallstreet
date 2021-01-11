@@ -747,7 +747,7 @@ class Game extends React.Component {
                     if (notEnoughPlayers)
                         status = gameIsOver
                             ? `Игра окончена! Недостаточно игроков для запуска новой игры`
-                            : `Недостаточно игроков`;
+                            : `Нужно минимум 5 игроков`;
                     else if (data.phase === 0)
                         if (data.userId === data.hostId)
                             status = gameIsOver
