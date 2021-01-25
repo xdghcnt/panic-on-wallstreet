@@ -810,9 +810,12 @@ class Game extends React.Component {
                     showEmptySlots = data.phase === 0 && !data.teamsLocked,
                     slots = (showEmptySlots ? data.playerSlots : activeSlots)
                         .map((value, slot) => showEmptySlots ? slot : value);
+                //const
+                //    auctionBidMin = data.auctionBid < 30 ? 5 : 10,
+                //    auctionBidMax = data.auctionBid < 30 ? 10 : 20;
                 const
-                    auctionBidMin = data.auctionBid < 30 ? 5 : 10,
-                    auctionBidMax = data.auctionBid < 30 ? 10 : 20;
+                    auctionBidMin = 5,
+                    auctionBidMax = 10;
                 return (
                     <div className={cs("game")}>
                         <div className={cs("game-board", {active: this.state.inited})}>
