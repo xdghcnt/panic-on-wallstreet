@@ -171,17 +171,20 @@ function init(wsServer, path) {
                             const sellerSlot = getRandomPlayer(
                                 [...room.wantSellerList].map((player) => room.playerSlots.indexOf(player)),
                                 [...Object.keys(room.sellers)]);
+                            const stocks = state.deck.splice(0, 3).reduce((res, stock) => {
+                                res[stock] = res[stock] || [];
+                                res[stock]++;
+                                return res;
+                            }, {});
                             room.sellers[sellerSlot] = {
                                 balance: 120,
-                                // offers: [{player: 1, price: 10, stocks: {red: 2, blue2x: 1},  stocksFinalized: {red: 2, blue2x: 1},
+                                // offers: [{player: 1, price: 10, stocks: {red: 2, blue2x: 1},
+                                // availableStocks: {red: 2}, stocksFinalized: {red: 2, blue2x: 1},
                                 // accepted: true, finalized: false, playerWantFinalize: 1  }]
                                 offers: [],
                                 stocksFinalized: {},
-                                stocks: state.deck.splice(0, 3).reduce((res, stock) => {
-                                    res[stock] = res[stock] || [];
-                                    res[stock]++;
-                                    return res;
-                                }, {}),
+                                stocks,
+                                availableStocks: clone(stocks),
                                 needPledge: false
                             };
                             room.defaultAvatars[sellerSlot] = sellerAvatars.pop();
@@ -398,6 +401,10 @@ function init(wsServer, path) {
                         room.auctionStocksLeft--;
                         auctionStep();
                     } else {
+                        Object.keys(room.sellers).forEach((sellerSlot) => {
+                            const seller = room.sellers[sellerSlot];
+                            seller.availableStocks = clone(seller.stocks);
+                        });
                         room.phase = 1;
                         room.round += 1;
                         room.auctionStock = null;
@@ -552,20 +559,13 @@ function init(wsServer, path) {
                     if (room.phase === 1
                         && room.sellers[slot]
                         && (room.sellers[slot].offers[offerInd] && !room.sellers[slot].offers[offerInd].finalized)) {
-                        const
-                            offer = room.sellers[slot].offers[offerInd],
-                            availableStocks = {...room.sellers[slot].stocks};
+                        const offer = room.sellers[slot].offers[offerInd];
                         if (offer.accepted) {
                             offer.accepted = false;
                             update();
                         } else {
-                            room.sellers[slot].offers.forEach((offer) => {
-                                if (offer.accepted)
-                                    Object.keys(offer.stocks).forEach((stock) => {
-                                        availableStocks[stock] -= offer.stocks[stock];
-                                    });
-                            });
                             let notEnough = false;
+                            const availableStocks = room.sellers[slot].availableStocks;
                             Object.keys(offer.stocks).forEach((stock) => {
                                 if (availableStocks[stock] < offer.stocks[stock]) {
                                     notEnough = true;
@@ -596,12 +596,19 @@ function init(wsServer, path) {
                             Object.keys(offer.stocks).forEach((stock) => {
                                 seller.stocksFinalized[stock] = seller.stocksFinalized[stock] || 0;
                                 seller.stocksFinalized[stock] += offer.stocks[stock];
+                                seller.availableStocks[stock] -= offer.stocks[stock];
                             });
                             clearTimeout(this.finalizeTimeouts[slot + offerInd]);
                             send([
                                 room.playerSlots[slot],
                                 room.playerSlots[sellerId]
                             ], "accept-finalize-offer");
+
+                            if (Object.keys(room.sellers)
+                                .every((sellerId) =>
+                                    Object.keys(room.sellers[sellerId].availableStocks)
+                                        .every((stock) => !room.sellers[sellerId].availableStocks[stock])))
+                                startStocksRandomize();
                         } else if (offer.playerWantFinalize === slot) {
                             offer.playerWantFinalize = null;
                             clearTimeout(this.finalizeTimeouts[slot + offerInd]);
@@ -728,8 +735,7 @@ function init(wsServer, path) {
                             room.paused = !room.paused;
                             if (!room.paused)
                                 startTimer(true);
-                        }
-                        else
+                        } else
                             startGame();
                         if (!room.paused)
                             room.teamsLocked = true;
@@ -821,6 +827,10 @@ function init(wsServer, path) {
             array[randomIndex] = temporaryValue;
         }
         return array;
+    }
+
+    function clone(obj) {
+        return JSON.parse(JSON.stringify(obj));
     }
 
     class JSONSet extends Set {
