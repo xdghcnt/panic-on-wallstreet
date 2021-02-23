@@ -1471,3 +1471,19 @@ body {
 .offer-stock-count.active {
     visibility: visible;
 }
+
+.player-tokens {
+    background: #16413c;
+    padding: 5px 0;
+    border-radius: 20px;
+    position: absolute;
+    top: 83px;
+    right: -4px;
+    font-family: 'Phosphorus';
+    font-size: 14px;
+    font-weight: bold;
+    width: 25px;
+    box-sizing: border-box;
+    text-align: center;
+    color: #f1e8c7;
+}

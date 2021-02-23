@@ -194,7 +194,8 @@ function init(wsServer, path) {
                                 [...room.wantBuyerList].map((player) => room.playerSlots.indexOf(player)),
                                 [...Object.keys(room.sellers), ...Object.keys(room.buyers)]);
                             room.buyers[buyerSlot] = {
-                                balance: 120
+                                balance: 120,
+                                availableTokens: 10
                             };
                             room.defaultAvatars[buyerSlot] = buyerAvatars.pop();
                         }
@@ -244,6 +245,7 @@ function init(wsServer, path) {
                     });
                     Object.keys(room.buyers).forEach((buyer) => {
                         room.buyers[buyer].roundResult = null;
+                        room.buyers[buyer].availableTokens = 10;
                     });
                     room.phase = 3;
                     update();
@@ -563,6 +565,9 @@ function init(wsServer, path) {
                             offer = room.sellers[slot].offers[offerInd],
                             availableStocks = {...room.sellers[slot].availableStocks};
                         if (offer.accepted) {
+                            room.buyers[offer.player].availableTokens +=
+                                Object.keys(room.sellers[slot].offers[offerInd].stocks).reduce((acc, stock) =>
+                                    acc + room.sellers[slot].offers[offerInd].stocks[stock], 0);
                             offer.accepted = false;
                             update();
                         } else {
@@ -579,7 +584,11 @@ function init(wsServer, path) {
                                     send(room.playerSlots[slot], "not-enough-stocks", stock);
                                 }
                             });
-                            if (!notEnough) {
+                            const availableTokens = room.buyers[offer.player].availableTokens -
+                                Object.keys(room.sellers[slot].offers[offerInd].stocks).reduce((acc, stock) =>
+                                    acc + room.sellers[slot].offers[offerInd].stocks[stock], 0);
+                            if (!notEnough && availableTokens >= 0) {
+                                room.buyers[offer.player].availableTokens = availableTokens;
                                 offer.accepted = true;
                                 offer.playerWantFinalize = null;
                                 send([

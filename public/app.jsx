@@ -205,6 +205,7 @@ class BuyerSlot extends React.Component {
                             <Player id={player} data={data} slot={slot} game={game}/>
                         </div>
                         <div className="player-balance"><Balance value={buyer.balance}/></div>
+                        <div className="player-tokens">{data.buyers[slot].availableTokens}</div>
                         {data.bankrupts.includes(slot)
                             ? <div className="bankrupt-icon"><i className="material-icons">money_off</i></div>
                             : ""}
