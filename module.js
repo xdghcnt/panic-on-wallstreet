@@ -559,13 +559,20 @@ function init(wsServer, path) {
                     if (room.phase === 1
                         && room.sellers[slot]
                         && (room.sellers[slot].offers[offerInd] && !room.sellers[slot].offers[offerInd].finalized)) {
-                        const offer = room.sellers[slot].offers[offerInd];
+                        const
+                            offer = room.sellers[slot].offers[offerInd],
+                            availableStocks = {...room.sellers[slot].availableStocks};
                         if (offer.accepted) {
                             offer.accepted = false;
                             update();
                         } else {
+                            room.sellers[slot].offers.forEach((offer) => {
+                                if (offer.accepted)
+                                    Object.keys(offer.stocks).forEach((stock) => {
+                                        availableStocks[stock] -= offer.stocks[stock];
+                                    });
+                            });
                             let notEnough = false;
-                            const availableStocks = room.sellers[slot].availableStocks;
                             Object.keys(offer.stocks).forEach((stock) => {
                                 if (availableStocks[stock] < offer.stocks[stock]) {
                                     notEnough = true;
@@ -603,7 +610,14 @@ function init(wsServer, path) {
                                 room.playerSlots[slot],
                                 room.playerSlots[sellerId]
                             ], "accept-finalize-offer");
-
+                            const offersToRemove = [];
+                            seller.offers.forEach((offer, ind) => {
+                                if (offerInd !== ind && Object.keys(offer.stocks).some((stock) =>
+                                    offer.stocks[stock] > seller.availableStocks[stock]
+                                ))
+                                    offersToRemove.push(offer);
+                            });
+                            seller.offers = seller.offers.filter((offer) => !offersToRemove.includes(offer));
                             if (Object.keys(room.sellers)
                                 .every((sellerId) =>
                                     Object.keys(room.sellers[sellerId].availableStocks)
@@ -851,4 +865,3 @@ function init(wsServer, path) {
 }
 
 module.exports = init;
-
