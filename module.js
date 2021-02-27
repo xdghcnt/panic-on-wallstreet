@@ -621,7 +621,7 @@ function init(wsServer, path) {
                             ], "accept-finalize-offer");
                             const offersToRemove = [];
                             seller.offers.forEach((offer, ind) => {
-                                if (offerInd !== ind && Object.keys(offer.stocks).some((stock) =>
+                                if (!offer.finalized && offerInd !== ind && Object.keys(offer.stocks).some((stock) =>
                                     offer.stocks[stock] > seller.availableStocks[stock]
                                 ))
                                     offersToRemove.push(offer);
