@@ -933,7 +933,7 @@ body {
     }
 }
 
-.seller-stocks .stock .stock-icon, 
+.seller-stocks .stock .stock-icon,
 .offer-pane .stock .stock-icon,
 .auction-pane .stock .stock-icon {
     box-shadow: 0 0 0 0 red;
@@ -1486,4 +1486,8 @@ body {
     box-sizing: border-box;
     text-align: center;
     color: #f1e8c7;
+}
+
+.konfa-menu img {
+    filter: brightness(0.1) !important;
 }
