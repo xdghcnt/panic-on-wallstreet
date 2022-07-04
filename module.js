@@ -17,7 +17,7 @@ function init(wsServer, path) {
 
     class GameState extends wsServer.users.RoomState {
         constructor(hostId, hostData, userRegistry) {
-            super(hostId, hostData, userRegistry);
+            super(hostId, hostData, userRegistry, registry.games.panicOnWallStreet.id, path);
             const
                 getResetParams = () => ({
                     phase: 0,
@@ -465,8 +465,20 @@ function init(wsServer, path) {
                     room.wantSellerList = new JSONSet();
                     clearInterval(interval);
                     resetFinalizeTimeouts();
-                    if (!restart)
+                    if (!restart) {
                         update();
+                        if (room.round === 5) {
+                            const sellerWin = Object.keys(room.sellers).sort((a, b) =>
+                                room.sellers[b].balance - room.sellers[a].balance)[0];
+                            const buyerWin = Object.keys(room.buyers).sort((a, b) =>
+                                room.buyers[b].balance - room.buyers[a].balance)[0];
+                            for (const slot of [sellerWin, buyerWin]) {
+                                const userData = {room, user: room.playerSlots[slot]}
+                                registry.authUsers.processAchievement(userData, registry.achievements.win100PanicOnWallStreet.id);
+                                registry.authUsers.processAchievement(userData, registry.achievements.winGames.id, {game: registry.games.win100PanicOnWallStreet.id});
+                            }
+                        }
+                    }
                 },
                 removePlayer = (playerId) => {
                     room.wantBuyerList.delete(playerId);
@@ -697,11 +709,6 @@ function init(wsServer, path) {
                         room.teamsLocked = !room.teamsLocked;
                     update();
                 },
-                "change-name": (user, value) => {
-                    if (value)
-                        room.playerNames[user] = value.substr && value.substr(0, 60);
-                    update();
-                },
                 "remove-player": (user, playerId) => {
                     if (playerId && user === room.hostId)
                         removePlayer(playerId);
@@ -870,7 +877,7 @@ function init(wsServer, path) {
         return Math.floor(Math.random() * (max - min + 1) + min);
     }
 
-    registry.createRoomManager(path, channel, GameState);
+    registry.createRoomManager(path, GameState);
 }
 
 module.exports = init;

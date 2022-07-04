@@ -89,7 +89,7 @@ class Player extends React.Component {
                 <div className={cs("player-name-text", `bg-color-${this.props.slot}`)}>
                     <UserAudioMarker data={data} user={id}/>
                     {hasPlayer
-                        ? data.playerNames[id]
+                        ? <PlayerName data={data} id={id} />
                         : (data.teamsLocked
                             ? (<div className="slot-empty">Пусто</div>)
                             : (<div className="join-slot-button"
@@ -130,7 +130,8 @@ class PlayerSlot extends React.Component {
                 slot = this.props.slot,
                 game = this.props.game,
                 player = data.playerSlots[slot],
-                hasAvatar = player !== null && data.playerAvatars[player];
+                avatar = window.commonRoom.getPlayerAvatarURL(player),
+                hasAvatar = player !== null && avatar;
             return (
                 <div
                     className={cs("player-slot", "ornament-border", `player-slot-${slot}`, {
@@ -142,9 +143,9 @@ class PlayerSlot extends React.Component {
                              onTouchStart={(e) => e.target.focus()}
                              style={{
                                  "background-image": player !== null
-                                     ? `url(/panic-on-wall-street/${data.playerAvatars[player]
-                                         ? `avatars/${player}/${data.playerAvatars[player]}.png`
-                                         : `media/avatars/${data.defaultAvatars[slot]}.png`})`
+                                     ? `url(${hasAvatar
+                                         ? avatar
+                                         : `/panic-on-wall-street/media/avatars/${data.defaultAvatars[slot]}.png`})`
                                      : ""
                              }}>
                             {player === data.userId
@@ -372,30 +373,14 @@ class SellerSlot extends React.Component {
 
 class Game extends React.Component {
     componentDidMount() {
-        this.gameName = "panic-on-wall-street";
-        const initArgs = {};
-        if (!localStorage.panicOnWallStreetUserId || !localStorage.panicOnWallStreetUserToken) {
-            while (!localStorage.userName)
-                localStorage.userName = prompt("Your name");
-            localStorage.panicOnWallStreetUserId = makeId();
-            localStorage.panicOnWallStreetUserToken = makeId();
-        }
-        if (!location.hash)
-            history.replaceState(undefined, undefined, location.origin + location.pathname + "#" + makeId());
-        else
-            history.replaceState(undefined, undefined, location.origin + location.pathname + location.hash);
-        initArgs.roomId = this.roomId = location.hash.substr(1);
-        initArgs.userId = this.userId = localStorage.panicOnWallStreetUserId;
-        initArgs.token = this.userToken = localStorage.panicOnWallStreetUserToken;
-        initArgs.userName = localStorage.userName;
-        initArgs.wssToken = window.wssToken;
-        this.socket = window.socket.of("panic-on-wall-street");
+        this.gameName = "panicOnWallStreet";
+        const initArgs = CommonRoom.roomInit(this);
         this.socket.on("state", (state) => {
             CommonRoom.processCommonRoom(state, this.state, {
                 maxPlayers: 11,
                 largeImageKey: "panic-on-wall-street",
                 details: "Panic on Wall Street"
-            });
+            }, this);
             const userSlot = ~state.playerSlots.indexOf(this.userId)
                 ? state.playerSlots.indexOf(this.userId)
                 : null;
@@ -531,14 +516,14 @@ class Game extends React.Component {
     handleRemovePlayer(id, evt) {
         evt.stopPropagation();
         if (!this.state.testMode)
-            popup.confirm({content: `Removing ${this.state.playerNames[id]}?`}, (evt) => evt.proceed && this.socket.emit("remove-player", id));
+            popup.confirm({content: `Removing ${window.commonRoom.getPlayerName(id)}?`}, (evt) => evt.proceed && this.socket.emit("remove-player", id));
         else
             this.socket.emit("remove-player", id);
     }
 
     handleGiveHost(id, evt) {
         evt.stopPropagation();
-        popup.confirm({content: `Give host ${this.state.playerNames[id]}?`}, (evt) => evt.proceed && this.socket.emit("give-host", id));
+        popup.confirm({content: `Give host ${window.commonRoom.getPlayerName(id)}?`}, (evt) => evt.proceed && this.socket.emit("give-host", id));
     }
 
     handleToggleTeamLockClick() {
@@ -562,36 +547,6 @@ class Game extends React.Component {
             popup.confirm({content: "Перезапустить игру?"}, (evt) => evt.proceed && this.socket.emit("restart"));
         else
             this.socket.emit("restart")
-    }
-
-    handleClickSetAvatar() {
-        document.getElementById("avatar-input").click();
-    }
-
-    handleSetAvatar(event) {
-        const input = event.target;
-        if (input.files && input.files[0]) {
-            const
-                file = input.files[0],
-                uri = "/common/upload-avatar",
-                xhr = new XMLHttpRequest(),
-                fd = new FormData(),
-                fileSize = ((file.size / 1024) / 1024).toFixed(4); // MB
-            if (fileSize <= 5) {
-                xhr.open("POST", uri, true);
-                xhr.onreadystatechange = () => {
-                    if (xhr.readyState === 4 && xhr.status === 200) {
-                        localStorage.avatarId = xhr.responseText;
-                        this.socket.emit("update-avatar", localStorage.avatarId);
-                    } else if (xhr.readyState === 4 && xhr.status !== 200) popup.alert({content: "Ошибка загрузки"});
-                };
-                fd.append("avatar", file);
-                fd.append("userId", this.userId);
-                fd.append("userToken", this.userToken);
-                xhr.send(fd);
-            } else
-                popup.alert({content: "Файл не должен занимать больше 5Мб"});
-        }
     }
 
     handlePlayerJoin(slot) {
@@ -723,6 +678,10 @@ class Game extends React.Component {
         }
     }
 
+    handleClickSetAvatar() {
+        window.commonRoom.handleClickSetImage('avatar');
+    }
+
     render() {
         try {
             clearInterval(this.timerTimeout);
@@ -819,6 +778,7 @@ class Game extends React.Component {
                     auctionBidMax = 10;
                 return (
                     <div className={cs("game")}>
+                        <CommonRoom state={this.state} app={this}/>
                         <div className={cs("game-board", {active: this.state.inited})}>
                             {showEmptySlots ? <div className="player-slots">{
                                 slots.map((slot) => (<PlayerSlot data={data} slot={slot} game={this}/>))}</div> : <>
@@ -876,7 +836,7 @@ class Game extends React.Component {
                                         <div className="want-role-title">Хочу слот Менеджера:</div>
                                         <div className="want-role-list">
                                             {data.wantSellerList.length ? data.wantSellerList.map((it) => (<div>
-                                                {data.playerNames[it]}
+                                                <PlayerName data={data} id={it} />
                                             </div>)) : "..."}
                                         </div>
                                     </div>
@@ -885,7 +845,7 @@ class Game extends React.Component {
                                         <div className="want-role-title">Хочу слот Инвестора:</div>
                                         <div className="want-role-list">
                                             {data.wantBuyerList.length ? data.wantBuyerList.map((it) => (<div>
-                                                {data.playerNames[it]}
+                                                <PlayerName data={data} id={it} />
                                             </div>)) : "..."}
                                         </div>
                                     </div>
@@ -986,7 +946,7 @@ class Game extends React.Component {
                                             {Object.keys(data.buyers).map((buyer) => (
                                                 <div className={cs("buyer-income-row")}>
                                                 <span className={cs("buyer-income-name", `bg-color-${buyer}`)}>
-                                                    {data.playerNames[data.playerSlots[buyer]] || "Пусто"}
+                                                    {window.commonRoom.getPlayerName(buyer) || "Пусто"}
                                                 </span>
                                                     {data.buyers[buyer].roundResult
                                                         ? (() => {
@@ -1029,7 +989,7 @@ class Game extends React.Component {
                                             {Object.keys(data.sellers).map((seller) => (
                                                 <div className={cs("seller-income-row")}>
                                                 <span className={cs("seller-income-name", `bg-color-${seller}`)}>
-                                                    {data.playerNames[data.playerSlots[seller]] || "Пусто"}
+                                                    {window.commonRoom.getPlayerName(seller) || "Пусто"}
                                                 </span>
                                                     {data.sellers[seller].roundResult
                                                         ? (() => {
@@ -1081,7 +1041,7 @@ class Game extends React.Component {
                                         </div>
                                         <div className={cs("auction-bidder", `bg-color-${data.auctionBidder}`)}>
                                             {data.auctionBidder !== null
-                                                ? data.playerNames[data.playerSlots[data.auctionBidder]] || "Пусто"
+                                                ? window.commonRoom.getPlayerName(data.playerSlots[data.auctionBidder]) || "Пусто"
                                                 : "Нет"
                                             }
                                         </div>
@@ -1164,8 +1124,6 @@ class Game extends React.Component {
                                               className="toggle-theme material-icons settings-button">volume_off</i>)}
                                 </>}
                             />
-                            <CommonRoom state={this.state} app={this}/>
-                            <input id="avatar-input" type="file" onChange={evt => this.handleSetAvatar(evt)}/>
                         </div>
                     </div>
                 );
