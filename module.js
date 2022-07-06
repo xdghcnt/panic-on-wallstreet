@@ -475,7 +475,7 @@ function init(wsServer, path) {
                             for (const slot of [sellerWin, buyerWin]) {
                                 const userData = {room, user: room.playerSlots[slot]}
                                 registry.authUsers.processAchievement(userData, registry.achievements.win100PanicOnWallStreet.id);
-                                registry.authUsers.processAchievement(userData, registry.achievements.winGames.id, {game: registry.games.win100PanicOnWallStreet.id});
+                                registry.authUsers.processAchievement(userData, registry.achievements.winGames.id, {game: registry.games.panicOnWallStreet.id});
                             }
                         }
                     }
