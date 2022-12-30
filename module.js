@@ -533,7 +533,6 @@ function init(wsServer, path) {
             this.userEvent = userEvent;
             this.finalizeTimeouts = {};
             this.slotEventHandlers = {
-
                 "reject-offer": (slot, offerInd) => { // also update the buyer's tokens
                     const
                         offer = room.sellers[slot].offers[offerInd];
@@ -564,7 +563,7 @@ function init(wsServer, path) {
                         else {
                             const offer = room.sellers[seller].offers[offerInd];
                             if (offer.accepted) {
-                                "reject-offer".call(slot, offerInd)
+                                this.slotEventHandlers["reject-offer"](slot, offerInd)
                                 update();
                             }
                             offer.stocks = stocks;
@@ -581,7 +580,7 @@ function init(wsServer, path) {
                         const
                             offer = room.sellers[slot].offers[offerInd];
                         if (offer.accepted) {
-                            "reject-offer".call(slot, offerInd)
+                            this.slotEventHandlers["reject-offer"](slot, offerInd)
                             update();
                         }
                         room.sellers[seller].offers.splice(offerInd, 1);
@@ -596,7 +595,7 @@ function init(wsServer, path) {
                             offer = room.sellers[slot].offers[offerInd],
                             availableStocks = {...room.sellers[slot].availableStocks};
                         if (offer.accepted) {
-                            "reject-offer".call(slot, offerInd)
+                            this.slotEventHandlers["reject-offer"](slot, offerInd)
                             update();
                         } else {
                             room.sellers[slot].offers.forEach((offer) => {
