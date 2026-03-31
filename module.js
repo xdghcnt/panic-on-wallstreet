@@ -599,7 +599,7 @@ function init(wsServer, path) {
                             update();
                         } else {
                             room.sellers[slot].offers.forEach((offer) => {
-                                if (offer.accepted)
+                                if (offer.accepted && !offer.finalized)
                                     Object.keys(offer.stocks).forEach((stock) => {
                                         availableStocks[stock] -= offer.stocks[stock];
                                     });
